@@ -7,7 +7,7 @@ To facilitate better data analysis for Equity Study a system to retain PII after
 
 A microservice will talk to the google api to store the data and expose an endpoint for flows to talk to.
 
-![Sequence Diagram](/diagram.png)
+![Sequence Diagram](diagram.png)
 
 ## Data Layout
 

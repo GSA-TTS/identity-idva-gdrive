@@ -9,6 +9,10 @@ A microservice will talk to the google api to store the data and expose an endpo
 
 ![Sequence Diagram](diagram.png)
 
+### Authentication
+
+The microservice will authenticate to Google's Drive api using a Google cloud service account that has been granted access to the drive folder where the data is stored. Within IDVA, access to the microservice is controlled at the network level.
+
 ## Data Layout
 
 The data will be stored in with a path of `/EquityStudy/<interactionId>/<filename>`.

@@ -1,0 +1,12 @@
+---
+applications:
+  - name: gdrive
+    routes:
+      - route: idva-gdrive-((ENVIRONMENT)).apps.internal
+    memory: ((MEMORY))
+    instances: ((INSTANCES))
+    buildpacks:
+      - python_buildpack
+    command: uvicorn gdrive.main:app --host 0.0.0.0 --port $PORT
+    services:
+      - gdrive

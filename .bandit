@@ -1,0 +1,2 @@
+[bandit]
+exclude: gdrive/tests, .venv/

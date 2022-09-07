@@ -1,0 +1,10 @@
+*.md
+.venv/
+gdrive/__pycache__/
+.bandit
+.codeclimate.yml 
+.github
+.pre-commit-config.yaml
+requirements-dev.txt
+tests/
+vars.yaml

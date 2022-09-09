@@ -45,11 +45,14 @@ def list(count: int):
         print("Files:")
         print("name (id) parents trashed")
         for item in items:
-            print(
-                "{0} ({1}) {2} {3}".format(
-                    item["name"], item["id"], item["parents"], item["trashed"]
+            try:
+                print(
+                    "{0} ({1}) {2} {3}".format(
+                        item["name"], item["id"], item["parents"], item["trashed"]
+                    )
                 )
-            )
+            except KeyError as error:
+                print(f"No such key: {error} in {item}")
     except HttpError as error:
         # TODO(developer) - Handle errors from drive API.
         print(f"An error occurred: {error}")

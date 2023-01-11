@@ -7,7 +7,6 @@ import io
 import logging
 
 import fastapi
-from fastapi import Body
 from starlette.requests import Request
 
 from . import client, settings
@@ -30,4 +29,5 @@ async def upload_file(id, filename, request: Request, base64: bool = False):
     stream = io.BytesIO(body)
 
     parent = client.create_folder(id, settings.ROOT_DIRECTORY)
-    client.upload_basic(filename, parent, stream)
+    if parent != None:
+        client.upload_basic(filename, parent, stream)

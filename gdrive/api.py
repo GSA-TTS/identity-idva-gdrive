@@ -19,8 +19,11 @@ router = fastapi.APIRouter()
 
 client.init()
 
+
 @router.post("/upload")
-async def upload_file(id, filename, request: Request, response: Response, base64: bool = False):
+async def upload_file(
+    id, filename, request: Request, response: Response, base64: bool = False
+):
     """
     Upload file to gdrive.
     """
@@ -40,6 +43,7 @@ async def upload_file(id, filename, request: Request, response: Response, base64
         log.error(f"An error occurred: {error}")
         response.status_code = error.status_code
 
+
 @router.delete("/upload")
 async def delete_file(filename, response: Response):
     """
@@ -50,11 +54,10 @@ async def delete_file(filename, response: Response):
         files = client.get_files(filename)
         if files:
             for file in files:
-                client.delete_file(file['id'])
+                client.delete_file(file["id"])
         else:
             response.status_code = status.HTTP_404_NOT_FOUND
 
     except HttpError as error:
         log.error(f"An error occurred: {error}")
         response.status_code = error.status_code
-         

@@ -1,0 +1,46 @@
+---
+# This workflow will run the Black Python formatter as well as the
+# Bandit security linter. See the following pages for details:
+# See https://black.readthedocs.io/en/stable/github_actions.html
+# https://github.com/PyCQA/bandit
+name: Python-Checks
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.py'  # All python files in the repository
+  pull_request:
+    paths:
+      - '**.py'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - uses: psf/black@stable
+
+  bandit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Scan
+        run: |
+          pip install -r requirements-dev.txt
+          bandit --exclude ./.venv/,./test -r .

@@ -1,0 +1,33 @@
+---
+# This workflow will run unit tests and deploy the application to a
+# target environment
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "*"
+    paths-ignore:
+      - "**.md" # All markdown files in the repository
+  release:
+    types: [released]
+
+jobs:
+  deploy:
+    if: github.repository_owner == 'GSA-TTS'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: GSA-TTS/identity-idva-cf-setup@v2
+        id: cf-setup
+        with:
+          cf-username: ${{ secrets.CF_USERNAME }}
+          cf-password: ${{ secrets.CF_PASSWORD }}
+          cf-org: ${{ secrets.CF_ORG }}
+
+      - name: Deploy application
+        run: cf push --vars-file vars.yaml --var ENVIRONMENT=${{ steps.cf-setup.outputs.target-environment }} --strategy rolling

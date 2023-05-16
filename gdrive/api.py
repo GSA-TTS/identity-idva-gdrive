@@ -21,14 +21,11 @@ router = fastapi.APIRouter()
 client.init()
 
 # Patch zip decodeExtra to ignore invalid extra data
-# original = zipfile.ZipInfo._decodeExtra
-
-
-def specialDecode(self):
+def nullDecode(self):
     return
 
 
-zipfile.ZipInfo._decodeExtra = specialDecode  # type: ignore
+zipfile.ZipInfo._decodeExtra = nullDecode  # type: ignore
 
 
 @router.post("/upload")
@@ -56,7 +53,6 @@ async def upload_file(
 
         if zip:
             with zipfile.ZipFile(stream) as archive:
-                r = archive.testzip
                 files = archive.filelist
                 for file in files:
                     image = io.BytesIO(archive.read(file))

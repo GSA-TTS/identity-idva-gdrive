@@ -4,3 +4,4 @@ black
 pylint
 bandit
 pytest
+httpx

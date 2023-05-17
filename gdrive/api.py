@@ -5,6 +5,7 @@ gdrive rest api
 import base64 as base64decoder
 import io
 import logging
+import zipfile
 
 import fastapi
 from fastapi import Response, status
@@ -20,9 +21,22 @@ router = fastapi.APIRouter()
 client.init()
 
 
+# Patch zip decodeExtra to ignore invalid extra data
+def nullDecode(self):
+    return
+
+
+zipfile.ZipInfo._decodeExtra = nullDecode  # type: ignore
+
+
 @router.post("/upload")
 async def upload_file(
-    id, filename, request: Request, response: Response, base64: bool = False
+    id,
+    filename,
+    request: Request,
+    response: Response,
+    base64: bool = False,
+    zip: bool = False,
 ):
     """
     Upload file to gdrive.
@@ -37,7 +51,15 @@ async def upload_file(
         stream = io.BytesIO(body)
 
         parent = client.create_folder(id, settings.ROOT_DIRECTORY)
-        client.upload_basic(filename, parent, stream)
+
+        if zip:
+            with zipfile.ZipFile(stream) as archive:
+                files = archive.filelist
+                for file in files:
+                    image = io.BytesIO(archive.read(file))
+                    client.upload_basic(f"{filename}_{file.filename}", parent, image)
+        else:
+            client.upload_basic(filename, parent, stream)
 
     except HttpError as error:
         log.error(f"An error occurred: {error}")

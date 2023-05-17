@@ -36,6 +36,6 @@ try:
             config = json.load(file)
     CREDENTIALS = config["credentials"]
     ROOT_DIRECTORY = config["root_directory"]
-except (json.JSONDecodeError, KeyError) as err:
+except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")
     log.debug("Error: %s", str(err))

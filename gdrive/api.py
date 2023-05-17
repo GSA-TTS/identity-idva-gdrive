@@ -20,6 +20,7 @@ router = fastapi.APIRouter()
 
 client.init()
 
+
 # Patch zip decodeExtra to ignore invalid extra data
 def nullDecode(self):
     return

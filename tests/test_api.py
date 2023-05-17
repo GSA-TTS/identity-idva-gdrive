@@ -1,16 +1,16 @@
-from fastapi import testclient
 import base64
 import io
+import sys
 import zipfile
-
-from gdrive import main
-from gdrive import api
-
 from unittest.mock import MagicMock
 
-client = testclient.TestClient(main.app)
+from fastapi import testclient
 
-api.client = MagicMock()
+# pylint: disable=wrong-import-position
+sys.modules["gdrive.client"] = MagicMock()
+from gdrive import main
+
+client = testclient.TestClient(main.app)
 
 
 def test_upload() -> None:

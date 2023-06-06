@@ -19,6 +19,8 @@ SERVICE_ACCOUNT_FILE = "credentials.json"
 ROOT_DIRECTORY = ""
 CREDENTIALS = None
 
+ES_HOST = os.getenv("ES_HOST", "localhost")
+ES_PORT = os.getenv("ES_PORT", "8080")
 
 try:
     vcap_services = os.getenv("VCAP_SERVICES")

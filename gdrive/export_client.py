@@ -6,12 +6,6 @@ from . import settings
 
 log = logging.getLogger(__name__)
 
-query = {
-    "size": 1000,
-    "query": {"bool": {"should": [{"match_phrase": {"interactionId": ""}}]}},
-    "sort": {"tsEms": {"order": "asc"}},
-}
-
 
 def export(interactionId):
     es = opensearchpy.OpenSearch(
@@ -57,7 +51,13 @@ def export(interactionId):
         "_source": ["interactionId"],
     }
 
-    query["query"]["bool"]["should"][0]["match_phrase"]["interactionId"] = interactionId
+    query = {
+        "size": 1000,
+        "query": {
+            "bool": {"should": [{"match_phrase": {"interactionId": interactionId}}]}
+        },
+        "sort": {"tsEms": {"order": "asc"}},
+    }
 
     # get subflow ids
     subs = es.search(body=json.dumps(subflowquery), index="_all")

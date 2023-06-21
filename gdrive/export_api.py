@@ -2,16 +2,11 @@
 gdrive rest api
 """
 
-import base64 as base64decoder
 import io
 import json
 import logging
-import zipfile
 
 import fastapi
-from fastapi import Response, status
-from googleapiclient.http import HttpError
-from starlette.requests import Request
 
 from . import export_client, client, settings
 

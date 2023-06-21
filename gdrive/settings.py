@@ -17,6 +17,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", logging.getLevelName(logging.INFO))
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 SERVICE_ACCOUNT_FILE = "credentials.json"
 ROOT_DIRECTORY = ""
+CODE_NAMES = None
 CREDENTIALS = None
 
 ES_HOST = os.getenv("ES_HOST")
@@ -38,6 +39,7 @@ try:
             config = json.load(file)
     CREDENTIALS = config["credentials"]
     ROOT_DIRECTORY = config["root_directory"]
+    CODE_NAMES = config["code_names"]
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")
     log.debug("Error: %s", str(err))

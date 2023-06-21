@@ -1,4 +1,5 @@
 import logging
+import re
 import opensearchpy
 import json
 
@@ -78,15 +79,9 @@ def export(interactionId):
 
 
 def codename(data: str):
-    codenames = {
-        "authenticid": "wombat",
-        "incode": "marmot",
-        "socure": "badger",
-        "lexisnexis": "hedgehog",
-        "redviolet": "meerkat",
-        "jumio": "dingo",
-    }
+    codenames = settings.CODE_NAMES
+
     for service, codename in codenames.items():
-        data = data.replace(service, codename)
+        data = re.sub(service, codename, data, flags=re.IGNORECASE)
 
     return data

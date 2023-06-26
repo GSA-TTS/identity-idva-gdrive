@@ -157,7 +157,11 @@ def codename(data: str):
 
 def get_qualtrics_response(surveyId: str, responseId: str):
     r = requests.post(
-        settings.QUALTRICS_API_URL + ":" + settings.QUALTRICS_API_PORT + "/response",
+        "http://"
+        + settings.QUALTRICS_API_URL
+        + ":"
+        + settings.QUALTRICS_API_PORT
+        + "/response",
         json={"surveyId": surveyId, "responseId": responseId},
         timeout=30,  # qualtrics microservice retries as it waits for response to become available
     )

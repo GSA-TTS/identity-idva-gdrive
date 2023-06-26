@@ -1,6 +1,6 @@
 import logging
 import json
-import time
+import re
 import requests
 
 from opensearchpy import OpenSearch, helpers

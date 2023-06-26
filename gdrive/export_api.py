@@ -28,9 +28,11 @@ async def upload_file(interactionId):
     parent = client.create_folder(interactionId, settings.ROOT_DIRECTORY)
     client.upload_basic("analytics.json", parent, export_bytes)
 
+
 class SurveyResponseModel(BaseModel):
     surveyId: str
     responseId: str
+
 
 @router.post("/survey-export")
 async def survey_upload_response(request: SurveyResponseModel):
@@ -40,8 +42,10 @@ async def survey_upload_response(request: SurveyResponseModel):
 
     try:
         # call function that invokes qualtrics microservice to get response
-        response = export_client.get_qualtrics_response(request.surveyId, request.responseId)
-        
+        response = export_client.get_qualtrics_response(
+            request.surveyId, request.responseId
+        )
+
         # call function that queries ES for all analytics entries (flow interactionId) with responseId
         interactionIds = export_client.export_response(request.responseId, response)
 
@@ -52,7 +56,4 @@ async def survey_upload_response(request: SurveyResponseModel):
         return response
     except error.ExportError as e:
         print("about to raise exception")
-        raise HTTPException(
-            status_code=400,
-            detail=e.args
-        )
+        raise HTTPException(status_code=400, detail=e.args)

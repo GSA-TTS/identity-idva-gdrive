@@ -159,6 +159,7 @@ def get_qualtrics_response(surveyId: str, responseId: str):
     r = requests.post(
         settings.QUALTRICS_API_URL + "/response",
         json={"surveyId": surveyId, "responseId": responseId},
+        timeout=30,  # qualtrics microservice retries as it waits for response to become available
     )
     if r.status_code != 200:
         raise error.ExportError(

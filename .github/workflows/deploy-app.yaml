@@ -36,3 +36,4 @@ jobs:
         run: |
           cf add-network-policy gdrive outbound-proxy -s ${{ steps.cf-setup.outputs.target-environment }}-public --protocol tcp --port 8080
           cf add-network-policy gdrive es-proxy -s ${{ steps.cf-setup.outputs.target-environment }} --protocol tcp --port 8080
+          cf add-network-policy gdrive qualtrix -s ${{ steps.cf-setup.outputs.target-environment }} --protocol tcp --port 8080

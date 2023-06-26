@@ -14,6 +14,6 @@ applications:
     env:
       ES_HOST: identity-idva-es-proxy-((ENVIRONMENT)).apps.internal
       ES_PORT: 8080
-      QUALTRICS_API_URL: idva-qualtrix-((ENVIRONMENT)).apps.internal
-      QUALTRICS_API_PORT: 8080
+      QUALTRICS_APP_URL: idva-qualtrix-((ENVIRONMENT)).apps.internal
+      QUALTRICS_APP_PORT: 8080
       NO_PROXY: .apps.internal

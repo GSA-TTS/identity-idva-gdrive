@@ -7,8 +7,12 @@ import json
 import logging
 
 import fastapi
+from pydantic import BaseModel, typing
+from fastapi import Response, status, HTTPException
+from googleapiclient.http import HttpError
+from starlette.requests import Request
 
-from . import export_client, client, settings
+from gdrive import export_client, client, settings, error
 
 log = logging.getLogger(__name__)
 
@@ -23,3 +27,32 @@ async def upload_file(interactionId):
     )
     parent = client.create_folder(interactionId, settings.ROOT_DIRECTORY)
     client.upload_basic("analytics.json", parent, export_bytes)
+
+class SurveyResponseModel(BaseModel):
+    surveyId: str
+    responseId: str
+
+@router.post("/survey-export")
+async def survey_upload_response(request: SurveyResponseModel):
+    """
+    Single endpoint to handle qualtrics response fetching and exporting
+    """
+
+    try:
+        # call function that invokes qualtrics microservice to get response
+        response = export_client.get_qualtrics_response(request.surveyId, request.responseId)
+        
+        # call function that queries ES for all analytics entries (flow interactionId) with responseId
+        interactionIds = export_client.export_response(request.responseId, response)
+
+        # export list of interactionIds to gdrive
+        for id in interactionIds:
+            upload_file(id)
+
+        return response
+    except error.ExportError as e:
+        print("about to raise exception")
+        raise HTTPException(
+            status_code=400,
+            detail=e.args
+        )

@@ -1,15 +1,17 @@
 import logging
-import re
-import opensearchpy
 import json
+import time
+import requests
 
-from . import settings
+from opensearchpy import OpenSearch, helpers
+
+from gdrive import settings, error
 
 log = logging.getLogger(__name__)
 
 
 def export(interactionId):
-    es = opensearchpy.OpenSearch(
+    es = OpenSearch(
         hosts=[{"host": settings.ES_HOST, "port": settings.ES_PORT}], timeout=300
     )
 
@@ -78,6 +80,72 @@ def export(interactionId):
     return output
 
 
+def export_response(responseId, survey_response):
+    es = OpenSearch(
+        hosts=[{"host": settings.ES_HOST, "port": settings.ES_PORT}], timeout=300
+    )
+
+    query_interactionId = {
+        # "size": 1000,
+        "query": {
+            "bool": {
+                "must": [
+                    {"match_phrase": {"properties.outcomeType.value": "survey_data"}},
+                    {"match": {"properties.outcomeDescription.value": f"{responseId}"}},
+                ]
+            }
+        },
+    }
+
+    # query for interaction IDs
+    # update+query on document IDS from interaction IDs
+
+    # get subflow ids
+    results_interacitonId = es.search(
+        body=json.dumps(query_interactionId), index="_all"
+    )
+
+    # query for ineteraction IDs associated with responseID
+    interactionIds_match = []
+
+    # double encode json to force quote escape
+    # due to it being stored as a string at rest
+    double_encoded_response = json.dumps(json.dumps(survey_response))
+
+    query_response_data = {
+        "script": {
+            "source": f"ctx._source.properties.outcomeDescription.value = {double_encoded_response}"
+        },
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "match_phrase": {
+                            "properties.outcomeType.value": "survey_response"
+                        }
+                    },
+                    {"bool": {"should": interactionIds_match}},
+                ]
+            }
+        },
+    }
+
+    for hit in results_interacitonId["hits"]["hits"]:
+        if hit["_source"]["capabilityName"] == "logOutcome":
+            interactionId = hit["_source"]["interactionId"]
+            match = {"match": {"interactionId": f"{interactionId}"}}
+            interactionIds_match.append(match)
+
+    if len(interactionIds_match) == 0:
+        raise error.ExportError(
+            f"No flow interactionId match for responseId: {responseId}"
+        )
+
+    results_update = es.update_by_query(index="_all", body=query_response_data)
+
+    return list(map(lambda id: id["match"]["interactionId"], interactionIds_match))
+
+
 def codename(data: str):
     codenames = settings.CODE_NAMES
 
@@ -85,3 +153,15 @@ def codename(data: str):
         data = re.sub(service, codename, data, flags=re.IGNORECASE)
 
     return data
+
+
+def get_qualtrics_response(surveyId: str, responseId: str):
+    r = requests.post(
+        settings.QUALTRICS_API_URL + "/response",
+        json={"surveyId": surveyId, "responseId": responseId},
+    )
+    if r.status_code != 200:
+        raise error.ExportError(
+            f"No survey response found for responseId: {responseId}"
+        )
+    return r.json()

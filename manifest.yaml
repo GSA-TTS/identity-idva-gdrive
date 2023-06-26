@@ -14,3 +14,4 @@ applications:
     env:
       ES_HOST: identity-idva-es-proxy-((ENVIRONMENT)).apps.internal
       ES_PORT: 8080
+      NO_PROXY: .apps.internal

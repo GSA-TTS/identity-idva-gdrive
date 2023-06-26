@@ -55,5 +55,4 @@ async def survey_upload_response(request: SurveyResponseModel):
 
         return response
     except error.ExportError as e:
-        print("about to raise exception")
         raise HTTPException(status_code=400, detail=e.args)

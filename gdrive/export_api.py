@@ -51,7 +51,7 @@ async def survey_upload_response(request: SurveyResponseModel):
 
         # export list of interactionIds to gdrive
         for id in interactionIds:
-            upload_file(id)
+            await upload_file(id)
 
         return response
     except error.ExportError as e:

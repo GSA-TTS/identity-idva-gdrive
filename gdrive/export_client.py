@@ -80,6 +80,15 @@ def export(interactionId):
     return output
 
 
+def codename(data: str):
+    codenames = settings.CODE_NAMES
+
+    for service, codename in codenames.items():
+        data = re.sub(service, codename, data, flags=re.IGNORECASE)
+
+    return data
+
+
 def export_response(responseId, survey_response):
     es = OpenSearch(
         hosts=[{"host": settings.ES_HOST, "port": settings.ES_PORT}], timeout=300
@@ -144,15 +153,6 @@ def export_response(responseId, survey_response):
     results_update = es.update_by_query(index="_all", body=query_response_data)
 
     return list(map(lambda id: id["match"]["interactionId"], interactionIds_match))
-
-
-def codename(data: str):
-    codenames = settings.CODE_NAMES
-
-    for service, codename in codenames.items():
-        data = re.sub(service, codename, data, flags=re.IGNORECASE)
-
-    return data
 
 
 def get_qualtrics_response(surveyId: str, responseId: str):

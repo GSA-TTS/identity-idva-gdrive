@@ -150,7 +150,9 @@ def export_response(responseId, survey_response):
             f"No flow interactionId match for responseId: {responseId}"
         )
 
-    results_update = es.update_by_query(index="_all", body=query_response_data)
+    results_update = es.update_by_query(
+        index="_all", body=query_response_data, refresh=True
+    )
 
     return list(map(lambda id: id["match"]["interactionId"], interactionIds_match))
 

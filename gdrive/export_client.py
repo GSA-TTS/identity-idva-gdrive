@@ -3,9 +3,9 @@ import json
 import re
 import requests
 
-from opensearchpy import OpenSearch, helpers
+from opensearchpy import OpenSearch
 
-from gdrive import settings, error, client
+from gdrive import settings, error
 
 log = logging.getLogger(__name__)
 
@@ -170,20 +170,3 @@ def get_qualtrics_response(surveyId: str, responseId: str):
             f"No survey response found for responseId: {responseId}"
         )
     return r.json()
-
-
-def upload_spreadsheet(first, last, email, responseId, time):
-    values = [[first, last, first + " " + last, email, responseId, time]]
-
-    body = {"values": values}
-    result = (
-        client.sheets_service.spreadsheets()
-        .values()
-        .append(
-            spreadsheetId=settings.SHEETS_ID,
-            range="Sheet1!A1",
-            valueInputOption="RAW",
-            body=body,
-        )
-        .execute()
-    )

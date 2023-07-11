@@ -164,3 +164,23 @@ def delete_file(id: str) -> None:
     """
 
     service.files().delete(fileId=id, supportsAllDrives=True).execute()
+
+
+def upload_participant(first, last, email, responseId, time):
+    """
+    Append participant data to spreadsheet
+    """
+    values = [[first, last, first + " " + last, email, responseId, time]]
+
+    body = {"values": values}
+    result = (
+        sheets_service.spreadsheets()
+        .values()
+        .append(
+            spreadsheetId=settings.SHEETS_ID,
+            range="Sheet1!A1",
+            valueInputOption="RAW",
+            body=body,
+        )
+        .execute()
+    )

@@ -62,7 +62,7 @@ async def survey_upload_response_task(request):
 
         log.info("Response found, beginning export.")
 
-        export_client.upload_spreadsheet(
+        client.upload_participant(
             request.first, request.last, request.email, request.responseId, request.time
         )
 

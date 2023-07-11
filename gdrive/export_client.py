@@ -5,7 +5,7 @@ import requests
 
 from opensearchpy import OpenSearch, helpers
 
-from gdrive import settings, error
+from gdrive import settings, error, client
 
 log = logging.getLogger(__name__)
 
@@ -158,6 +158,13 @@ def export_response(responseId, survey_response):
 
 
 def get_qualtrics_response(surveyId: str, responseId: str):
+    url = (
+        "http://"
+        + settings.QUALTRICS_APP_URL
+        + ":"
+        + settings.QUALTRICS_APP_PORT
+        + "/response"
+    )
     r = requests.post(
         "http://"
         + settings.QUALTRICS_APP_URL
@@ -172,3 +179,20 @@ def get_qualtrics_response(surveyId: str, responseId: str):
             f"No survey response found for responseId: {responseId}"
         )
     return r.json()
+
+
+def upload_spreadsheet(first, last, email, responseId, time):
+    values = [[first, last, first + " " + last, email, responseId, time]]
+
+    body = {"values": values}
+    result = (
+        client.sheets_service.spreadsheets()
+        .values()
+        .append(
+            spreadsheetId=settings.SHEETS_ID,
+            range="Sheet1!A1",
+            valueInputOption="RAW",
+            body=body,
+        )
+        .execute()
+    )

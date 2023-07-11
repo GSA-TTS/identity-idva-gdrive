@@ -14,14 +14,17 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", logging.getLevelName(logging.INFO))
 
-SCOPES = ["https://www.googleapis.com/auth/drive"]
+SCOPES = [
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/spreadsheets",
+]
 SERVICE_ACCOUNT_FILE = "credentials.json"
 ROOT_DIRECTORY = ""
 CODE_NAMES = None
 CREDENTIALS = None
 
-ES_HOST = os.getenv("ES_HOST")
-ES_PORT = os.getenv("ES_PORT")
+ES_HOST = os.getenv("ES_HOST", "localhost")
+ES_PORT = os.getenv("ES_PORT", "8080")
 
 QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
 QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
@@ -43,6 +46,7 @@ try:
     CREDENTIALS = config["credentials"]
     ROOT_DIRECTORY = config["root_directory"]
     CODE_NAMES = config["code_names"]
+    SHEETS_ID = config["sheets_id"]
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")
     log.debug("Error: %s", str(err))

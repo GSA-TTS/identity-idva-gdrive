@@ -23,8 +23,8 @@ ROOT_DIRECTORY = ""
 CODE_NAMES = None
 CREDENTIALS = None
 
-ES_HOST = os.getenv("ES_HOST", "localhost")
-ES_PORT = os.getenv("ES_PORT", "8080")
+ES_HOST = os.getenv("ES_HOST")
+ES_PORT = os.getenv("ES_PORT")
 
 QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
 QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")

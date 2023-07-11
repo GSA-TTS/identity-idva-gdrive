@@ -158,19 +158,10 @@ def export_response(responseId, survey_response):
 
 
 def get_qualtrics_response(surveyId: str, responseId: str):
-    url = (
-        "http://"
-        + settings.QUALTRICS_APP_URL
-        + ":"
-        + settings.QUALTRICS_APP_PORT
-        + "/response"
-    )
+    url = f"http://{settings.QUALTRICS_APP_URL}:{settings.QUALTRICS_APP_PORT}/response"
+
     r = requests.post(
-        "http://"
-        + settings.QUALTRICS_APP_URL
-        + ":"
-        + settings.QUALTRICS_APP_PORT
-        + "/response",
+        url,
         json={"surveyId": surveyId, "responseId": responseId},
         timeout=30,  # qualtrics microservice retries as it waits for response to become available
     )

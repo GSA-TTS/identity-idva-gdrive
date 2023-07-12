@@ -7,7 +7,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
-from gdrive import settings
+from gdrive import settings, error
 
 log = logging.getLogger(__name__)
 
@@ -184,3 +184,6 @@ def upload_participant(first, last, email, responseId, time):
         )
         .execute()
     )
+    if not result:
+        raise error.ExportError("Sheets append failed")
+    return result

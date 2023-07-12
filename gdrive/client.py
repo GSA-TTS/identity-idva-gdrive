@@ -7,15 +7,15 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
-from gdrive import settings
+from gdrive import settings, error
 
 log = logging.getLogger(__name__)
-
 
 creds = service_account.Credentials.from_service_account_info(
     settings.CREDENTIALS, scopes=settings.SCOPES
 )
 service = build("drive", "v3", credentials=creds)
+sheets_service = build("sheets", "v4", credentials=creds)
 
 
 def init():
@@ -164,3 +164,26 @@ def delete_file(id: str) -> None:
     """
 
     service.files().delete(fileId=id, supportsAllDrives=True).execute()
+
+
+def upload_participant(first, last, email, responseId, time):
+    """
+    Append participant data to spreadsheet
+    """
+    values = [[first, last, first + " " + last, email, responseId, time]]
+
+    body = {"values": values}
+    result = (
+        sheets_service.spreadsheets()
+        .values()
+        .append(
+            spreadsheetId=settings.SHEETS_ID,
+            range="Sheet1!A1",
+            valueInputOption="RAW",
+            body=body,
+        )
+        .execute()
+    )
+    if "error" in result:
+        raise error.ExportError(result["error"]["message"])
+    return result

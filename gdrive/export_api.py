@@ -27,37 +27,49 @@ async def upload_file(interactionId):
     client.upload_basic("analytics.json", parent, export_bytes)
 
 
-class SurveyResponseModel(BaseModel):
+class SurveyParticipantModel(BaseModel):
     surveyId: str
     responseId: str
+    first: str
+    last: str
+    email: str
+    time: str
 
 
 @router.post("/survey-export")
 async def survey_upload_response(
-    request: SurveyResponseModel, background_tasks: BackgroundTasks
+    request: SurveyParticipantModel, background_tasks: BackgroundTasks
 ):
     """
     Single endpoint that kicks off qualtrics response fetching and exporting
     """
 
-    background_tasks.add_task(
-        survey_upload_response_task, request.responseId, request.surveyId
-    )
+    background_tasks.add_task(survey_upload_response_task, request)
 
     return responses.JSONResponse(
         status_code=202, content=f"Response {request.responseId} is being processed."
     )
 
 
-async def survey_upload_response_task(responseId, surveyId):
+async def survey_upload_response_task(request):
     """
     Background task that handles qualtrics response fetching and exporting
     """
     try:
-        response = export_client.get_qualtrics_response(surveyId, responseId)
+        response = export_client.get_qualtrics_response(
+            request.surveyId, request.responseId
+        )
+
+        log.info("Response found, beginning export.")
+
+        client.upload_participant(
+            request.first, request.last, request.email, request.responseId, request.time
+        )
 
         # call function that queries ES for all analytics entries (flow interactionId) with responseId
-        interactionIds = export_client.export_response(responseId, response)
+        interactionIds = export_client.export_response(request.responseId, response)
+
+        log.info("Analytics updated, beginning gdrive export.")
 
         # export list of interactionIds to gdrive
         for id in interactionIds:

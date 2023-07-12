@@ -3,7 +3,7 @@ import json
 import re
 import requests
 
-from opensearchpy import OpenSearch, helpers
+from opensearchpy import OpenSearch
 
 from gdrive import settings, error
 
@@ -158,12 +158,10 @@ def export_response(responseId, survey_response):
 
 
 def get_qualtrics_response(surveyId: str, responseId: str):
+    url = f"http://{settings.QUALTRICS_APP_URL}:{settings.QUALTRICS_APP_PORT}/response"
+
     r = requests.post(
-        "http://"
-        + settings.QUALTRICS_APP_URL
-        + ":"
-        + settings.QUALTRICS_APP_PORT
-        + "/response",
+        url,
         json={"surveyId": surveyId, "responseId": responseId},
         timeout=30,  # qualtrics microservice retries as it waits for response to become available
     )

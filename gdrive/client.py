@@ -184,6 +184,6 @@ def upload_participant(first, last, email, responseId, time):
         )
         .execute()
     )
-    if not result:
-        raise error.ExportError("Sheets append failed")
+    if "error" in result:
+        raise error.ExportError(result["error"]["message"])
     return result

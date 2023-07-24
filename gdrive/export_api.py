@@ -9,6 +9,7 @@ import logging
 import fastapi
 from pydantic import BaseModel
 from fastapi import BackgroundTasks, responses
+from typing import Optional
 
 from gdrive import export_client, client, settings, error
 
@@ -27,13 +28,21 @@ async def upload_file(interactionId):
     client.upload_basic("analytics.json", parent, export_bytes)
 
 
-class SurveyParticipantModel(BaseModel):
-    surveyId: str
-    responseId: str
+class ParticipantModel(BaseModel):
     first: str
     last: str
     email: str
     time: str
+
+
+class SurveyParticipantModel(BaseModel):
+    """
+    Request body format for the `/survey-response` endpoint
+    """
+
+    surveyId: str
+    responseId: str
+    participant: Optional[ParticipantModel]
 
 
 @router.post("/survey-export")
@@ -62,9 +71,15 @@ async def survey_upload_response_task(request):
 
         log.info("Response found, beginning export.")
 
-        client.upload_participant(
-            request.first, request.last, request.email, request.responseId, request.time
-        )
+        if request.participant:
+            participant = request.participant
+            client.upload_participant(
+                participant.first,
+                participant.last,
+                participant.email,
+                participant.responseId,
+                participant.time,
+            )
 
         # call function that queries ES for all analytics entries (flow interactionId) with responseId
         interactionIds = export_client.export_response(request.responseId, response)

@@ -9,7 +9,6 @@ import logging
 import fastapi
 from pydantic import BaseModel
 from fastapi import BackgroundTasks, responses
-from typing import Optional
 
 from gdrive import export_client, client, settings, error
 
@@ -42,7 +41,7 @@ class SurveyParticipantModel(BaseModel):
 
     surveyId: str
     responseId: str
-    participant: Optional[ParticipantModel]
+    participant: ParticipantModel | None = ...
 
 
 @router.post("/survey-export")

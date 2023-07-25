@@ -1,8 +1,6 @@
 # IDVA GDrive Microservice
-The IDVA Token microservice is a Python Flask
-application that exposes an API for generating and validating simple tokens.
-
-Tokens are at default valid for 7 days and have 1 use. Time and uses can be adjusted when registering a token.
+The IDVA GDrive microservice is a Python Fast API
+application that interfaces IDVA applications to the Google Drive API.
 
 ## Building Locally
 

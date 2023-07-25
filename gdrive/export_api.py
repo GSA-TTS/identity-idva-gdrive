@@ -77,7 +77,7 @@ async def survey_upload_response_task(request):
                 participant.first,
                 participant.last,
                 participant.email,
-                participant.responseId,
+                request.responseId,
                 participant.time,
             )
 

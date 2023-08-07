@@ -41,7 +41,7 @@ class SurveyParticipantModel(BaseModel):
 
     surveyId: str
     responseId: str
-    participant: ParticipantModel | None = ...
+    participant: ParticipantModel | None = None
 
 
 @router.post("/survey-export")

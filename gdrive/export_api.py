@@ -32,6 +32,7 @@ class ParticipantModel(BaseModel):
     last: str
     email: str
     time: str
+    date: str
 
 
 class SurveyParticipantModel(BaseModel):
@@ -78,6 +79,7 @@ async def survey_upload_response_task(request):
                 participant.email,
                 request.responseId,
                 participant.time,
+                participant.date,
             )
 
         # call function that queries ES for all analytics entries (flow interactionId) with responseId

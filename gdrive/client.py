@@ -166,11 +166,11 @@ def delete_file(id: str) -> None:
     service.files().delete(fileId=id, supportsAllDrives=True).execute()
 
 
-def upload_participant(first, last, email, responseId, time):
+def upload_participant(first, last, email, responseId, time, date):
     """
     Append participant data to spreadsheet
     """
-    values = [[first, last, first + " " + last, email, responseId, time]]
+    values = [[first, last, first + " " + last, email, responseId, time, date]]
 
     body = {"values": values}
     result = (

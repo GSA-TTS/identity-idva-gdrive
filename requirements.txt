@@ -1,7 +1,7 @@
 fastapi==0.101.1
 uvicorn==0.23.2
 starlette-prometheus==0.9.0
-google-api-python-client==2.97.0
+google-api-python-client==2.98.0
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==1.0.0
 opensearch-py

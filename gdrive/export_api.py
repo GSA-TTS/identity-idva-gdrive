@@ -71,6 +71,11 @@ async def survey_upload_response_task(request):
 
         log.info("Response found, beginning export.")
 
+        # By the time we get here, we can count on the response containing the demographic data
+        # as it is included in the Completed flow responses. Responses without complete status
+        # throws exception in get_qualtrics_response
+        survey_resp = response["response"]
+
         if request.participant:
             participant = request.participant
             client.upload_participant(
@@ -80,6 +85,14 @@ async def survey_upload_response_task(request):
                 request.responseId,
                 participant.time,
                 participant.date,
+                survey_resp["ethnicity"],
+                ", ".join(
+                    survey_resp["race"]
+                ),  # Can have more than one value in a list
+                survey_resp["gender"],
+                survey_resp["age"],
+                survey_resp["income"],
+                survey_resp["skin_tone"],
             )
 
         # call function that queries ES for all analytics entries (flow interactionId) with responseId

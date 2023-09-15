@@ -169,4 +169,5 @@ def get_qualtrics_response(surveyId: str, responseId: str):
         raise error.ExportError(
             f"No survey response found for responseId: {responseId}"
         )
+
     return r.json()

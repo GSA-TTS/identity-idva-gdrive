@@ -50,7 +50,9 @@ async def survey_upload_response(
     request: SurveyParticipantModel, background_tasks: BackgroundTasks
 ):
     """
-    Single endpoint that kicks off qualtrics response fetching and exporting
+    Single endpoint that kicks off qualtrics response fetching and exporting. Requests response data
+    from the Qualtrix API and uploads contact and demographic data to the google drive. Does not upload
+    responses without a complete status.
     """
 
     background_tasks.add_task(survey_upload_response_task, request)
@@ -71,6 +73,16 @@ async def survey_upload_response_task(request):
 
         log.info("Response found, beginning export.")
 
+        if response["status"] != "Complete":
+            raise error.ExportError(
+                f"Cannot upload incomplete survery response to raw completions spreadsheet: {request.responseId}"
+            )
+
+        # By the time we get here, we can count on the response containing the demographic data
+        # as it is included in the Completed flow responses. Responses without complete status
+        # throws exception in get_qualtrics_response
+        survey_resp = response["response"]
+
         if request.participant:
             participant = request.participant
             client.upload_participant(
@@ -80,6 +92,14 @@ async def survey_upload_response_task(request):
                 request.responseId,
                 participant.time,
                 participant.date,
+                survey_resp["ethnicity"],
+                ", ".join(
+                    survey_resp["race"]
+                ),  # Can have more than one value in a list
+                survey_resp["gender"],
+                survey_resp["age"],
+                survey_resp["income"],
+                survey_resp["skin_tone"],
             )
 
         # call function that queries ES for all analytics entries (flow interactionId) with responseId

@@ -81,7 +81,9 @@ interactionId: <parent flow interaciton id>
 
 #### Analytics + Survey Response Export
 Exports analytics in bulk that are associated with a survey response. Also uploads
-participant data to google spread sheet.
+participant data to google spread sheet. Data provided in the request body, as well
+as demographic data collected from Qualtrix api will be uploaded. Only responses that 
+have a Complete status (user has completed the survey) will be uploaded to the google spead sheet. 
 
 `POST /survey-export`
 

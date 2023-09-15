@@ -170,11 +170,4 @@ def get_qualtrics_response(surveyId: str, responseId: str):
             f"No survey response found for responseId: {responseId}"
         )
 
-    resp = r.json()
-
-    if resp["status"] != "Complete":
-        raise error.ExportError(
-            f"Cannot upload incomplete survery response to raw completions spreadsheet: {responseId}"
-        )
-
-    return resp
+    return r.json()

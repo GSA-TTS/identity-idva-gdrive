@@ -50,7 +50,9 @@ async def survey_upload_response(
     request: SurveyParticipantModel, background_tasks: BackgroundTasks
 ):
     """
-    Single endpoint that kicks off qualtrics response fetching and exporting
+    Single endpoint that kicks off qualtrics response fetching and exporting. Requests response data
+    from the Qualtrix API and uploads contact and demographic data to the google drive. Does not upload
+    responses without a complete status.
     """
 
     background_tasks.add_task(survey_upload_response_task, request)

@@ -196,6 +196,9 @@ def get_all_InteractionIds(responseId):
         body=json.dumps(query_interactionId), index="_all"
     )
 
+    if results_interacitonId["hits"]["total"]["value"] == 0:
+        return []
+
     interactionIds_match = list(
         map(
             lambda res: res["_source"]["interactionId"],

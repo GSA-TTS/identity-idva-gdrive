@@ -14,10 +14,15 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", logging.getLevelName(logging.INFO))
 
+ANALYTICS = os.getenv("ANALYTICS", False)
+ANALYTICS_PROPERTY_ID = os.getenv("ANALYTICS_PROPERTY_ID", 377091467)
+
 SCOPES = [
+    "https://www.googleapis.com/auth/analytics",
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/spreadsheets",
 ]
+
 SERVICE_ACCOUNT_FILE = "credentials.json"
 ROOT_DIRECTORY = ""
 CODE_NAMES = None

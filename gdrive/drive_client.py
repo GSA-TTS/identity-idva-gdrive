@@ -14,8 +14,8 @@ log = logging.getLogger(__name__)
 creds = service_account.Credentials.from_service_account_info(
     settings.CREDENTIALS, scopes=settings.SCOPES
 )
+
 service = build("drive", "v3", credentials=creds)
-sheets_service = build("sheets", "v4", credentials=creds)
 
 
 def init():
@@ -60,6 +60,22 @@ def list(count: int = 10, shared: bool = True) -> None:
             )
         except KeyError as error:
             log.info(f"No such key: {error} in {item}")
+
+
+def create_empty_spreadsheet(filename: str, parent_id: str) -> str:
+    file_metadata = {
+        "name": filename,
+        "parents": [parent_id],
+        "mimeType": "application/vnd.google-apps.spreadsheet",
+    }
+
+    file = (
+        service.files()
+        .create(body=file_metadata, fields="id", supportsAllDrives=True)
+        .execute()
+    )
+
+    return file.get("id")
 
 
 def drives_list():
@@ -164,54 +180,3 @@ def delete_file(id: str) -> None:
     """
 
     service.files().delete(fileId=id, supportsAllDrives=True).execute()
-
-
-def upload_participant(
-    first,
-    last,
-    email,
-    responseId,
-    time,
-    date,
-    ethnicity,
-    race,
-    gender,
-    age,
-    income,
-    skin_tone,
-):
-    """
-    Append participant data to spreadsheet
-    """
-    values = [
-        [
-            first,
-            last,
-            first + " " + last,
-            email,
-            responseId,
-            time,
-            date,
-            ethnicity,
-            race,
-            gender,
-            income,
-            skin_tone,
-        ]
-    ]
-
-    body = {"values": values}
-    result = (
-        sheets_service.spreadsheets()
-        .values()
-        .append(
-            spreadsheetId=settings.SHEETS_ID,
-            range="Sheet1!A1",
-            valueInputOption="RAW",
-            body=body,
-        )
-        .execute()
-    )
-    if "error" in result:
-        raise error.ExportError(result["error"]["message"])
-    return result

@@ -10,7 +10,7 @@ import fastapi
 from pydantic import BaseModel
 from fastapi import BackgroundTasks, responses
 
-from gdrive import export_client, client, settings, error
+from gdrive import export_client, drive_client, settings, error
 
 log = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ async def upload_file(interactionId):
     export_bytes = io.BytesIO(
         export_client.codename(json.dumps(export_data, indent=2)).encode()
     )
-    parent = client.create_folder(interactionId, settings.ROOT_DIRECTORY)
-    client.upload_basic("analytics.json", parent, export_bytes)
+    parent = drive_client.create_folder(interactionId, settings.ROOT_DIRECTORY)
+    drive_client.upload_basic("analytics.json", parent, export_bytes)
 
 
 class ParticipantModel(BaseModel):
@@ -73,11 +73,6 @@ async def survey_upload_response_task(request):
 
         log.info("Response found, beginning export.")
 
-        if response["status"] != "Complete":
-            raise error.ExportError(
-                f"Cannot upload incomplete survery response to raw completions spreadsheet: {request.responseId}"
-            )
-
         # By the time we get here, we can count on the response containing the demographic data
         # as it is included in the Completed flow responses. Responses without complete status
         # throws exception in get_qualtrics_response
@@ -85,7 +80,7 @@ async def survey_upload_response_task(request):
 
         if request.participant:
             participant = request.participant
-            client.upload_participant(
+            drive_client.upload_participant(
                 participant.first,
                 participant.last,
                 participant.email,
@@ -122,7 +117,7 @@ class FindModel(BaseModel):
     responseId: str
     field: str
     values: list[str]
-    result_field: str | None = None
+    result_field: str | None
 
 
 @router.post("/find")

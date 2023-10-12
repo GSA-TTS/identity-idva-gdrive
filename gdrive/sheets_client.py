@@ -209,6 +209,11 @@ def do_create_pivot_tables(
         "Added pivot table to %s (%s)" % (page_names[2], names_to_id[page_names[2]])
     )
 
+    create_feedback_pt(sheets_id, names_to_id[page_names[3]], col_dict)
+    log.info(
+        "Added pivot table to %s (%s)" % (page_names[3], names_to_id[page_names[3]])
+    )
+
     update_cell_value(sheets_id, page_names[0], "A17", "Total First Visits")
     update_cell_value(
         sheets_id,
@@ -535,6 +540,57 @@ def create_clicks_pt(sheets_id, page_id, col_dict):
                             "sourceColumnOffset": col_dict["eventCount"],
                             "showTotals": True,
                             "sortOrder": "ASCENDING",
+                        },
+                    ],
+                    "values": [
+                        {
+                            "summarizeFunction": "SUM",
+                            "sourceColumnOffset": col_dict["eventCount"],
+                        }
+                    ],
+                    "valueLayout": "HORIZONTAL",
+                }
+            }
+        ),
+    )
+
+
+def create_feedback_pt(sheets_id, page_id, col_dict):
+    add_pivot_tables(
+        sheets_id,
+        page_id,
+        (
+            {
+                "pivotTable": {
+                    "source": {
+                        "sheetId": 0,
+                    },
+                    "rows": [
+                        {
+                            "sourceColumnOffset": col_dict["eventName"],
+                            "showTotals": True,
+                            "sortOrder": "ASCENDING",
+                        },
+                        {
+                            "sourceColumnOffset": col_dict["eventCount"],
+                            "showTotals": True,
+                            "sortOrder": "ASCENDING",
+                        },
+                    ],
+                    "filterSpecs": [
+                        {
+                            "filterCriteria": {
+                                "condition": {
+                                    "type": "TEXT_CONTAINS",
+                                    "values": [
+                                        {
+                                            "userEnteredValue": "feedback",
+                                        }
+                                    ],
+                                },
+                                "visibleByDefault": True,
+                            },
+                            "columnOffsetIndex": col_dict["linkUrl"],
                         },
                     ],
                     "values": [

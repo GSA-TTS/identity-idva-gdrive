@@ -15,7 +15,6 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 LOG_LEVEL = os.getenv("LOG_LEVEL", logging.getLevelName(logging.INFO))
 
 ANALYTICS = os.getenv("ANALYTICS", False)
-ANALYTICS_PROPERTY_ID = os.getenv("ANALYTICS_PROPERTY_ID", 377091467)
 
 SCOPES = [
     "https://www.googleapis.com/auth/analytics",
@@ -27,6 +26,8 @@ SERVICE_ACCOUNT_FILE = "credentials.json"
 ROOT_DIRECTORY = ""
 CODE_NAMES = None
 CREDENTIALS = None
+ANALYTICS_ROOT = None
+ANALYTICS_PROPERTY_ID = None
 
 ES_HOST = os.getenv("ES_HOST")
 ES_PORT = os.getenv("ES_PORT")
@@ -49,6 +50,8 @@ try:
             log.info("Loading credentials from creds file")
             config = json.load(file)
     CREDENTIALS = config["credentials"]
+    ANALYTICS_ROOT = config["analytics_root"]
+    ANALYTICS_PROPERTY_ID = config["analytics_property_id"]
     ROOT_DIRECTORY = config["root_directory"]
     CODE_NAMES = config["code_names"]
     SHEETS_ID = config["sheets_id"]

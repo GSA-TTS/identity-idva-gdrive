@@ -87,7 +87,7 @@ async def run_analytics_task(start_date: datetime, end_date: datetime):
         sheets_id = export(analytics_df, start_date, end_date)
         do_analytics_export_post_processing(analytics_df, sheets_id=sheets_id)
     except Exception as e:
-        log.error(e.args)
+        log.error(e)
 
 
 async def list_accounts_task():
@@ -127,7 +127,7 @@ def export(
     """
     filename_str = get_filename(date_of_report, end_date)
     analytics_folder_id = drive_client.create_folder(
-        "Google Analytics", parent_id=settings.ROOT_DIRECTORY
+        "Google Analytics", parent_id=settings.ANALYTICS_ROOT
     )
 
     # We have to do this in multiple steps with more than one client because the Sheets API
@@ -156,11 +156,14 @@ def do_analytics_export_post_processing(df: pd.DataFrame, sheets_id: str):
     page1 = "Rekrewt Pivot Table - First Visit"
     page2 = "Rekrewt Pivot Table - Sessions"
     page3 = "GSA Use Pivot Table"
+    page4 = "Completions"
 
-    new_sheet_name_to_id = sheets_client.add_new_pages([page1, page2, page3], sheets_id)
+    new_sheet_name_to_id = sheets_client.add_new_pages(
+        [page1, page2, page3, page4], sheets_id
+    )
     log.info("Added %s pages to %s" % (len(new_sheet_name_to_id.keys()), sheets_id))
     sheets_client.do_create_pivot_tables(
-        df, (page1, page2, page3), new_sheet_name_to_id, sheets_id
+        df, (page1, page2, page3, page4), new_sheet_name_to_id, sheets_id
     )
 
 

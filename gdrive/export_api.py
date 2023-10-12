@@ -7,7 +7,7 @@ import json
 import logging
 
 import fastapi
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi import BackgroundTasks, responses
 
 from gdrive import export_client, client, settings, error
@@ -121,7 +121,7 @@ class FindModel(BaseModel):
 
     responseId: str
     field: str
-    values: list[str]
+    values: list[str] = Field(..., min_items=1)
     result_field: str | None = None
 
 

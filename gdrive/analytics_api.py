@@ -46,10 +46,11 @@ async def run_analytics(background_tasks: BackgroundTasks, req: AnalyticsRequest
         )
 
     except ValueError as err:
+        message = str(err)
         return responses.JSONResponse(
             status_code=422,
             content="Failed (invalid date parameters): [%s, %s] %s"
-            % (req.startDate, req.endDate, err),
+            % (req.startDate, req.endDate, message),
         )
 
 

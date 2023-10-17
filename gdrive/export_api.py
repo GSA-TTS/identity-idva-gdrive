@@ -117,7 +117,7 @@ class FindModel(BaseModel):
     responseId: str
     field: str
     values: list[str]
-    result_field: str | None
+    result_field: str | None = None
 
 
 @router.post("/find")

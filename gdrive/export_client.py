@@ -170,11 +170,159 @@ def get_qualtrics_response(surveyId: str, responseId: str):
             f"No survey response found for responseId: {responseId}"
         )
 
-    resp = r.json()
+    return r.json()
 
-    if resp["status"] != "Complete":
-        raise error.ExportError(
-            f"Cannot upload incomplete survery response to raw completions spreadsheet: {responseId}"
+
+def get_all_InteractionIds(responseId):
+    es = OpenSearch(
+        hosts=[{"host": settings.ES_HOST, "port": settings.ES_PORT}], timeout=300
+    )
+
+    # query for all parent flow intraction ids for a given response id
+    query_interactionId = {
+        "size": 500,
+        "query": {
+            "bool": {
+                "must": [
+                    {"match_phrase": {"properties.outcomeType.value": "survey_data"}},
+                    {"match": {"properties.outcomeDescription.value": f"{responseId}"}},
+                ]
+            }
+        },
+        "_source": ["interactionId"],
+    }
+
+    results_interacitonId = es.search(
+        body=json.dumps(query_interactionId), index="_all"
+    )
+
+    if results_interacitonId["hits"]["total"]["value"] == 0:
+        return []
+
+    interactionIds_match = list(
+        map(
+            lambda res: res["_source"]["interactionId"],
+            results_interacitonId["hits"]["hits"],
         )
+    )
 
-    return resp
+    subflow_query_1 = list(
+        map(
+            lambda res: {
+                "bool": {
+                    "must": [
+                        {
+                            "match_phrase": {
+                                "parentInteractionProps.parentInteractionId": f'{res["_source"]["interactionId"]}'
+                            }
+                        },
+                        {"exists": {"field": "interactionId"}},
+                    ]
+                }
+            },
+            results_interacitonId["hits"]["hits"],
+        )
+    )
+
+    subflow_query_2 = list(
+        map(
+            lambda res: {
+                "bool": {
+                    "must": [
+                        {
+                            "match_phrase": {
+                                "properties.outcomeDescription.value": f'{res["_source"]["interactionId"]}'
+                            }
+                        },
+                        {"match_phrase": {"properties.outcomeType.value": "parent_id"}},
+                    ]
+                }
+            },
+            results_interacitonId["hits"]["hits"],
+        )
+    )
+
+    subflowquery = {
+        "size": 500,
+        "query": {"bool": {"should": subflow_query_1 + subflow_query_2}},
+        "_source": ["interactionId"],
+    }
+
+    subs = es.search(body=json.dumps(subflowquery), index="_all")
+
+    sub_interactionIds_match = list(
+        map(
+            lambda res: res["_source"]["interactionId"],
+            subs["hits"]["hits"],
+        )
+    )
+
+    return interactionIds_match + sub_interactionIds_match
+
+
+def find(responseId, field, values, result):
+    # find values in find for all flow for a given responseId
+    # field and result should be one of:
+    #   properties.outcomeDescription.value
+    #   properties.outcomeStatus.value
+    #   properties.outcomeType.value
+    #   properties.outcomeDetail.value
+
+    es = OpenSearch(
+        hosts=[{"host": settings.ES_HOST, "port": settings.ES_PORT}], timeout=300
+    )
+
+    all_interactionIds = get_all_InteractionIds(responseId)
+
+    if len(all_interactionIds) == 0:
+        return {"found": []}
+
+    all_interactionIds_match = list(
+        map(lambda res: {"match": {"interactionId": f"{res}"}}, all_interactionIds)
+    )
+
+    values_match = list(
+        map(
+            lambda res: {"match_phrase": {field: res}},
+            values,
+        )
+    )
+
+    query_found = {
+        "size": 500,
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "bool": {
+                            "should": values_match,
+                        }
+                    },
+                    {
+                        "bool": {
+                            "should": all_interactionIds_match,
+                        }
+                    },
+                ]
+            }
+        },
+        "_source": [result],
+    }
+
+    found_result = es.search(body=json.dumps(query_found), index="_all")
+
+    list_found = list(
+        map(
+            lambda x: recursive_decent(x["_source"], result.split(".")),
+            found_result["hits"]["hits"],
+        )
+    )
+
+    return {"found": list_found}
+
+
+def recursive_decent(obj: dict | str, query: list[str]):
+    # given dict and a dot notated key name, return value of key
+    if query == [] or not isinstance(obj, dict):
+        return obj
+    return recursive_decent(obj.get(query[0], ""), query[1:])

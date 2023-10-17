@@ -23,19 +23,12 @@ class AnalyticsRequest(BaseModel):
 
 @router.post("/analytics")
 async def run_analytics(background_tasks: BackgroundTasks):
-    if settings.ANALYTICS:
-        background_tasks.add_task(run_analytics_task, datetime.today(), None)
-        return responses.JSONResponse(
-            status_code=202,
-            content="Analytics request for %s is being processed."
-            % (datetime.date(datetime.today())),
-        )
-
-    else:
-        return responses.JSONResponse(
-            status_code=409,
-            content="Request is good, however the client has requested a resource that is unavailable at this time.",
-        )
+    background_tasks.add_task(run_analytics_task, datetime.today(), None)
+    return responses.JSONResponse(
+        status_code=202,
+        content="Analytics request for %s is being processed."
+        % (datetime.date(datetime.today())),
+    )
 
 
 @router.post("/analytics/daterange")
@@ -44,39 +37,28 @@ async def run_analytics(background_tasks: BackgroundTasks, req: AnalyticsRequest
         date_format = "%Y-%m-%d"
         start_date = datetime.strptime(req.startDate, date_format)
         end_date = datetime.strptime(req.endDate, date_format)
-    except ValueError as _:
-        return responses.JSONResponse(
-            status_code=400,
-            content="Failed (invalid date parameters): %s, %s"
-            % (req.start_date, req.end_date),
-        )
 
-    if settings.ANALYTICS:
         background_tasks.add_task(run_analytics_task, start_date, end_date)
         return responses.JSONResponse(
             status_code=202,
             content="Analytics request for %s - %s is being processed."
             % (datetime.date(start_date), datetime.date(end_date)),
         )
-    else:
+
+    except ValueError as err:
         return responses.JSONResponse(
-            status_code=409,
-            content="Request is good, however the client has requested a resource that is unavailable at this time.",
+            status_code=422,
+            content="Failed (invalid date parameters): [%s, %s] %s"
+            % (req.startDate, req.endDate, err),
         )
 
 
 @router.post("/analytics/list")
 async def list_accounts(backgroud_tasks: BackgroundTasks):
-    if settings.ANALYTICS:
-        backgroud_tasks.add_task(list_accounts_task)
-        return responses.JSONResponse(
-            status_code=202, content="List request is being processed."
-        )
-    else:
-        return responses.JSONResponse(
-            status_code=409,
-            content="Request is good, however the client has requested a resource that is unavailable at this time.",
-        )
+    backgroud_tasks.add_task(list_accounts_task)
+    return responses.JSONResponse(
+        status_code=202, content="List request is being processed."
+    )
 
 
 async def run_analytics_task(start_date: datetime, end_date: datetime):
@@ -85,7 +67,7 @@ async def run_analytics_task(start_date: datetime, end_date: datetime):
             settings.ANALYTICS_PROPERTY_ID, start_date, end_date
         )
         sheets_id = export(analytics_df, start_date, end_date)
-        do_analytics_export_post_processing(analytics_df, sheets_id=sheets_id)
+        analytics_export_post_processing(analytics_df, sheets_id=sheets_id)
     except Exception as e:
         log.error(e)
 
@@ -125,7 +107,7 @@ def export(
     Returns:
         str: Google Sheets ID of the new Sheets object
     """
-    filename_str = get_filename(date_of_report, end_date)
+    filename_str = generate_filename(date_of_report, end_date)
     analytics_folder_id = drive_client.create_folder(
         "Google Analytics", parent_id=settings.ANALYTICS_ROOT
     )
@@ -141,7 +123,7 @@ def export(
     return sheets_id
 
 
-def do_analytics_export_post_processing(df: pd.DataFrame, sheets_id: str):
+def analytics_export_post_processing(df: pd.DataFrame, sheets_id: str):
     """
     Add new pages and pivot tables.
 
@@ -167,7 +149,7 @@ def do_analytics_export_post_processing(df: pd.DataFrame, sheets_id: str):
     )
 
 
-def get_filename(date: datetime, end_date: datetime = None):
+def generate_filename(date: datetime, end_date: datetime = None):
     """
     Return filename for the new spreadsheet to be saved as
 

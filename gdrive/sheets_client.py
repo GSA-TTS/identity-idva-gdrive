@@ -91,8 +91,7 @@ def add_pivot_tables(
     Returns:
         Google Sheets API Response: RAW response to the write operation
     """
-    requests = []
-    requests.append(
+    requests = [
         {
             "updateCells": {
                 "rows": {
@@ -108,7 +107,7 @@ def add_pivot_tables(
                 "fields": "pivotTable",
             }
         }
-    )
+    ]
 
     body = {"requests": requests}
 

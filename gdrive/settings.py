@@ -14,8 +14,6 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", logging.getLevelName(logging.INFO))
 
-ANALYTICS = os.getenv("ANALYTICS", False)
-
 SCOPES = [
     "https://www.googleapis.com/auth/analytics",
     "https://www.googleapis.com/auth/drive",

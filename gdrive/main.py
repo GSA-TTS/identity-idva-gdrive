@@ -7,6 +7,7 @@ import fastapi
 import starlette_prometheus
 
 from . import api, export_api, settings
+from gdrive.database import session
 
 logging.basicConfig(level=settings.LOG_LEVEL)
 

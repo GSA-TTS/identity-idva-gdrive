@@ -29,8 +29,18 @@ ES_PORT = os.getenv("ES_PORT")
 QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
 QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
 
+# Database connection
+SCHEMA_NAME = "gdrive"
+DB_NAME = None
+HOST = None
+NAME = None
+PASSWORD = None
+PORT = None
+URI = None
+USERNAME = None
+
 try:
-    vcap_services = os.getenv("VCAP_SERVICES")
+    vcap_services = None
     config = {}
     if vcap_services:
         user_services = json.loads(vcap_services)["user-provided"]
@@ -45,8 +55,19 @@ try:
             config = json.load(file)
     CREDENTIALS = config["credentials"]
     ROOT_DIRECTORY = config["root_directory"]
-    CODE_NAMES = config["code_names"]
+    # CODE_NAMES = config["code_names"]
     SHEETS_ID = config["sheets_id"]
+
+    # Database connections
+    DB_NAME = config["db_name"]
+    HOST = config["host"]
+    NAME = config["name"]
+    PASSWORD = config["password"]
+    PORT = config["port"]
+    URI = config["uri"]
+    USERNAME = config["username"]
+
+
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")
-    log.debug("Error: %s", str(err))
+    log.error("Error: %s", str(err))

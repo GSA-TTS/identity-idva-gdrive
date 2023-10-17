@@ -8,11 +8,13 @@ import logging
 import zipfile
 
 import fastapi
-from fastapi import Response, status
+from fastapi import Response, status, responses
 from googleapiclient.http import HttpError
 from starlette.requests import Request
 
 from . import client, settings
+
+from gdrive.database import crud
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +29,11 @@ def nullDecode(self):
 
 
 zipfile.ZipInfo._decodeExtra = nullDecode  # type: ignore
+
+
+@router.post("/hello")
+async def hello(request: Request):
+    return responses.JSONResponse(status_code=202, content=f"{crud.hello_world()}")
 
 
 @router.post("/upload")

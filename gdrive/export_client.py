@@ -274,9 +274,6 @@ def find(responseId, field, values, result):
 
     all_interactionIds = get_all_InteractionIds(responseId)
 
-    if len(all_interactionIds) == 0:
-        return {"found": []}
-
     all_interactionIds_match = list(
         map(lambda res: {"match": {"interactionId": f"{res}"}}, all_interactionIds)
     )

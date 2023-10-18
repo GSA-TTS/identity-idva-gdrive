@@ -46,6 +46,7 @@ async def run_analytics(background_tasks: BackgroundTasks, req: AnalyticsRequest
         )
 
     except ValueError as err:
+        # @suppress("py/stack-trace-exposure")
         return responses.JSONResponse(
             status_code=422,
             content="Failed (invalid date parameters): %s" % (err),

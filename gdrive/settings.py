@@ -18,7 +18,10 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/spreadsheets",
 ]
+
 SERVICE_ACCOUNT_FILE = "credentials.json"
+DATABASE_CONFIG_FILE = "db_config.json"
+
 ROOT_DIRECTORY = ""
 CODE_NAMES = None
 CREDENTIALS = None
@@ -28,16 +31,6 @@ ES_PORT = os.getenv("ES_PORT")
 
 QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
 QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
-
-# Database connection
-SCHEMA_NAME = "gdrive"
-DB_NAME = None
-HOST = None
-NAME = None
-PASSWORD = None
-PORT = None
-URI = None
-USERNAME = None
 
 try:
     vcap_services = None
@@ -53,19 +46,18 @@ try:
         with open(SERVICE_ACCOUNT_FILE) as file:
             log.info("Loading credentials from creds file")
             config = json.load(file)
+        with open(DATABASE_CONFIG_FILE) as file:
+            log.info("Loading DB credentials")
+            db_config = json.load(file)
+
     CREDENTIALS = config["credentials"]
     ROOT_DIRECTORY = config["root_directory"]
     # CODE_NAMES = config["code_names"]
     SHEETS_ID = config["sheets_id"]
 
     # Database connections
-    DB_NAME = config["db_name"]
-    HOST = config["host"]
-    NAME = config["name"]
-    PASSWORD = config["password"]
-    PORT = config["port"]
-    URI = config["uri"]
-    USERNAME = config["username"]
+    URI = db_config["uri"]
+    SCHEMA = db_config["schema_name"]
 
 
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:

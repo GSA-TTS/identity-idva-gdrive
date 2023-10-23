@@ -122,13 +122,13 @@ async def survey_upload_response_task(request):
             )
 
         # call function that queries ES for all analytics entries (flow interactionId) with responseId
-        # interactionIds = export_client.export_response(request.responseId, response)
+        interactionIds = export_client.export_response(request.responseId, response)
 
-        # log.info("Analytics updated, beginning gdrive export.")
+        log.info("Analytics updated, beginning gdrive export.")
 
-        # # export list of interactionIds to gdrive
-        # for id in interactionIds:
-        #     await upload_file(id)
+        # export list of interactionIds to gdrive
+        for id in interactionIds:
+            await upload_file(id)
     except error.ExportError as e:
         log.error(e.args)
 

@@ -29,11 +29,11 @@ CREDENTIALS = None
 ES_HOST = os.getenv("ES_HOST")
 ES_PORT = os.getenv("ES_PORT")
 
-QUALTRICS_APP_URL = "localhost"
-QUALTRICS_APP_PORT = "6807"
+QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
+QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
 
 try:
-    vcap_services = None
+    vcap_services = os.getenv("VCAP_SERVICES")
     config = {}
     if vcap_services:
         user_services = json.loads(vcap_services)["user-provided"]
@@ -52,7 +52,7 @@ try:
 
     CREDENTIALS = config["credentials"]
     ROOT_DIRECTORY = config["root_directory"]
-    # CODE_NAMES = config["code_names"]
+    CODE_NAMES = config["code_names"]
     SHEETS_ID = config["sheets_id"]
 
     # Database connections

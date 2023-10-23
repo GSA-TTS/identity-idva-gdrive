@@ -6,20 +6,6 @@ from sqlalchemy.ext import declarative
 Base = declarative.declarative_base()
 
 
-class TestModel(Base):
-    __tablename__ = "test_table"
-
-    id = sqla.Column(sqla.INTEGER, primary_key=True, index=True)
-    test_content = sqla.Column(sqla.String)
-
-    def as_list(self, index: str) -> list:
-        return [
-            index,
-            self.id,
-            self.test_content,
-        ]
-
-
 class ParticipantModel(Base):
     __tablename__ = "participant"
 

@@ -8,6 +8,7 @@ from google.analytics.data_v1beta.types import (
     Dimension,
     Metric,
     RunReportRequest,
+    RunReportResponse,
 )
 
 import logging
@@ -30,7 +31,7 @@ for the IDVA flow.
 
 def download(
     property_id, target_date: datetime, end_date: datetime = None
-) -> pd.DataFrame:
+) -> RunReportResponse:
     """
     Access Google Analytics (GA4) api and download desired analytics report.
     """
@@ -83,7 +84,7 @@ def format_date_for_api(date: datetime):
     return date.strftime(API_DATE_FORMAT)
 
 
-def create_df_from_analytics_response(response):
+def create_df_from_analytics_response(response: RunReportResponse):
     """
     Extracts values from Google Analytics API response and transforms
     them into pandas DataFrame for ease of use. This enables the analytics

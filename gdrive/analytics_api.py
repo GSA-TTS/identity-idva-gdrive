@@ -2,7 +2,7 @@
 Google Analytics Rest API
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 import fastapi
@@ -22,8 +22,10 @@ class AnalyticsRequest(BaseModel):
 
 
 @router.post("/analytics")
-async def run_analytics(background_tasks: BackgroundTasks):
-    background_tasks.add_task(run_analytics_task, datetime.today(), None)
+async def run_analytics_default(background_tasks: BackgroundTasks):
+    # Default behaviour for the system is run a report from previous day
+    target_date = datetime.today() - timedelta(days=1)
+    run_analytics(target_date, None)
     return responses.JSONResponse(
         status_code=202,
         content="Analytics request for %s is being processed."
@@ -32,12 +34,14 @@ async def run_analytics(background_tasks: BackgroundTasks):
 
 
 @router.post("/analytics/daterange")
-async def run_analytics(background_tasks: BackgroundTasks, req: AnalyticsRequest):
+async def run_analytics_daterange(
+    background_tasks: BackgroundTasks, req: AnalyticsRequest
+):
     try:
         start_date = datetime.strptime(req.startDate, analytics_client.API_DATE_FORMAT)
         end_date = datetime.strptime(req.endDate, analytics_client.API_DATE_FORMAT)
 
-        background_tasks.add_task(run_analytics_task, start_date, end_date)
+        run_analytics(start_date, end_date)
         return responses.JSONResponse(
             status_code=202,
             content="Analytics request for %s - %s is being processed."
@@ -60,7 +64,7 @@ async def list_accounts(backgroud_tasks: BackgroundTasks):
     )
 
 
-async def run_analytics_task(start_date: datetime, end_date: datetime):
+def run_analytics(start_date: datetime, end_date: datetime):
     try:
         response = analytics_client.download(
             settings.ANALYTICS_PROPERTY_ID, start_date, end_date
@@ -145,7 +149,7 @@ def analytics_export_post_processing(df: pd.DataFrame, sheets_id: str):
         [page1, page2, page3, page4], sheets_id
     )
     log.info("Added %s pages to %s" % (len(new_sheet_name_to_id.keys()), sheets_id))
-    sheets_client.do_create_pivot_tables(
+    sheets_client.create_pivot_tables(
         df, (page1, page2, page3, page4), new_sheet_name_to_id, sheets_id
     )
 

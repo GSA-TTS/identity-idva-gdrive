@@ -34,9 +34,8 @@ async def run_analytics(background_tasks: BackgroundTasks):
 @router.post("/analytics/daterange")
 async def run_analytics(background_tasks: BackgroundTasks, req: AnalyticsRequest):
     try:
-        date_format = "%Y-%m-%d"
-        start_date = datetime.strptime(req.startDate, date_format)
-        end_date = datetime.strptime(req.endDate, date_format)
+        start_date = datetime.strptime(req.startDate, analytics_client.API_DATE_FORMAT)
+        end_date = datetime.strptime(req.endDate, analytics_client.API_DATE_FORMAT)
 
         background_tasks.add_task(run_analytics_task, start_date, end_date)
         return responses.JSONResponse(
@@ -63,9 +62,11 @@ async def list_accounts(backgroud_tasks: BackgroundTasks):
 
 async def run_analytics_task(start_date: datetime, end_date: datetime):
     try:
-        analytics_df = analytics_client.download(
+        response = analytics_client.download(
             settings.ANALYTICS_PROPERTY_ID, start_date, end_date
         )
+
+        analytics_df = analytics_client.create_df_from_analytics_response(response)
         sheets_id = export(analytics_df, start_date, end_date)
         analytics_export_post_processing(analytics_df, sheets_id=sheets_id)
     except Exception as e:

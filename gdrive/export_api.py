@@ -73,6 +73,11 @@ async def survey_upload_response_task(request):
 
         log.info("Response found, beginning export.")
 
+        if response["status"] != "Complete":
+            raise error.ExportError(
+                f"Cannot upload incomplete survery response to raw completions spreadsheet: {request.responseId}"
+            )
+
         # By the time we get here, we can count on the response containing the demographic data
         # as it is included in the Completed flow responses. Responses without complete status
         # throws exception in get_qualtrics_response

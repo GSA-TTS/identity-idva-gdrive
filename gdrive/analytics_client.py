@@ -18,6 +18,7 @@ from gdrive import settings
 log = logging.getLogger(__name__)
 
 creds = service_account.Credentials.from_service_account_info(settings.CREDENTIALS)
+API_DATE_FORMAT = "%Y-%m-%d"
 
 """
 Client for the Google Analytics (GA4) API
@@ -63,9 +64,7 @@ def download(
         ],
     )
 
-    return create_df_from_analytics_response(
-        BetaAnalyticsDataClient(credentials=creds).run_report(request)
-    )
+    return BetaAnalyticsDataClient(credentials=creds).run_report(request)
 
 
 def list():
@@ -81,7 +80,7 @@ def format_date_for_api(date: datetime):
     """
     Formats datetime object for Google Analytics Api (GA4) input
     """
-    return date.strftime("%Y-%m-%d")
+    return date.strftime(API_DATE_FORMAT)
 
 
 def create_df_from_analytics_response(response):

@@ -185,7 +185,7 @@ def export_df_to_gdrive_speadsheet(df: pd.DataFrame, sheets_id: str, title="Shee
 # Project specific functions
 
 
-def do_create_pivot_tables(
+def create_pivot_tables(
     df: pd.DataFrame, page_names: (str, str, str), names_to_id: dict, sheets_id: str
 ):
     # Make a dictionary mapping the name of the column to its index, useful for the pivot tables.

@@ -85,13 +85,14 @@ async def survey_upload_response_task(request):
         survey_resp = response["response"]
 
         if request.participant:
+            participant = request.participant
             client.upload_participant(
-                request.participant.first,
-                request.participant.last,
-                request.participant.email,
+                participant.first,
+                participant.last,
+                participant.email,
                 request.responseId,
-                request.participant.time,
-                request.participant.date,
+                participant.time,
+                participant.date,
                 survey_resp["ethnicity"],
                 ", ".join(
                     survey_resp["race"]
@@ -104,12 +105,12 @@ async def survey_upload_response_task(request):
 
             crud.create_participant(
                 models.ParticipantModel(
-                    first=request.participant.first,
-                    last=request.participant.last,
-                    email=request.participant.email,
+                    first=participant.first,
+                    last=participant.last,
+                    email=participant.email,
                     response_id=request.responseId,
-                    time=request.participant.time,
-                    date=request.participant.date,
+                    time=participant.time,
+                    date=participant.date,
                     ethnicity=survey_resp["ethnicity"],
                     race=", ".join(
                         survey_resp["race"]

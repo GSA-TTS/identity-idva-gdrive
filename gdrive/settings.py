@@ -62,4 +62,4 @@ try:
 
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")
-    log.error("Error: %s", str(err))
+    log.debug("Error: %s", str(err))

@@ -22,21 +22,18 @@ class AnalyticsRequest(BaseModel):
 
 
 @router.post("/analytics")
-async def run_analytics_default(background_tasks: BackgroundTasks):
+async def run_analytics_default():
     # Default behaviour for the system is run a report from previous day
     target_date = datetime.today() - timedelta(days=1)
     run_analytics(target_date, None)
     return responses.JSONResponse(
         status_code=202,
-        content="Analytics request for %s is being processed."
-        % (datetime.date(datetime.today())),
+        content="Analytics report for %s complete." % (datetime.date(datetime.today())),
     )
 
 
 @router.post("/analytics/daterange")
-async def run_analytics_daterange(
-    background_tasks: BackgroundTasks, req: AnalyticsRequest
-):
+async def run_analytics_daterange(req: AnalyticsRequest):
     try:
         start_date = datetime.strptime(req.startDate, analytics_client.API_DATE_FORMAT)
         end_date = datetime.strptime(req.endDate, analytics_client.API_DATE_FORMAT)
@@ -44,7 +41,7 @@ async def run_analytics_daterange(
         run_analytics(start_date, end_date)
         return responses.JSONResponse(
             status_code=202,
-            content="Analytics request for %s - %s is being processed."
+            content="Analytics report for %s - %s complete."
             % (datetime.date(start_date), datetime.date(end_date)),
         )
 

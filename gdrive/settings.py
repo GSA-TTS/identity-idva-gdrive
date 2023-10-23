@@ -58,8 +58,6 @@ try:
     # Database connections
     URI = db_config["uri"]
     SCHEMA = db_config["schema_name"]
-
-
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")
     log.debug("Error: %s", str(err))

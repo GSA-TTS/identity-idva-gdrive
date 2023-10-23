@@ -1,12 +1,13 @@
 import sqlalchemy
 from sqlalchemy import orm
 
-from gdrive.database import models, schemas
+from gdrive.database import database, models
 
 
-def create_test_content(session: orm.Session, content: schemas.TestCreate):
-    db_item = models.TestModel(**content.dict())
+def create_participant(db_item: models.ParticipantModel):
+    session = database.SessionLocal()
     session.add(db_item)
     session.commit()
     session.refresh(db_item)
+    session.close()
     return db_item

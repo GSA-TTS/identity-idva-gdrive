@@ -29,8 +29,8 @@ CREDENTIALS = None
 ES_HOST = os.getenv("ES_HOST")
 ES_PORT = os.getenv("ES_PORT")
 
-QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
-QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
+QUALTRICS_APP_URL = "localhost"
+QUALTRICS_APP_PORT = "6807"
 
 try:
     vcap_services = None

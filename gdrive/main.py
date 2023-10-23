@@ -7,7 +7,7 @@ import fastapi
 import starlette_prometheus
 
 from . import api, export_api, settings
-from gdrive.database import database, models, api as db_api
+from gdrive.database import database, models
 
 logging.basicConfig(level=settings.LOG_LEVEL)
 
@@ -20,4 +20,3 @@ app.add_route("/metrics/", starlette_prometheus.metrics)
 
 app.include_router(api.router)
 app.include_router(export_api.router)
-app.include_router(db_api.router)

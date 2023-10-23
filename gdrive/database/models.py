@@ -28,9 +28,12 @@ class ParticipantModel(Base):
     last = sqla.Column(sqla.String)
     email = sqla.Column(sqla.String)
     response_id = sqla.Column(sqla.String)
-    datetime = sqla.Column(sqla.Date)
+    time = sqla.Column(sqla.String)
+    date = sqla.Column(sqla.String)
     ethnicity = sqla.Column(sqla.String)
+    race = sqla.Column(sqla.String)
     gender = sqla.Column(sqla.String)
+    age = sqla.Column(sqla.String)
     income = sqla.Column(sqla.String)
     skin_tone = sqla.Column(sqla.String)
 

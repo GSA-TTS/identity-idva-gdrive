@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from fastapi import BackgroundTasks, responses
 
 from gdrive import export_client, client, settings, error
+from gdrive.database import crud, models
 
 log = logging.getLogger(__name__)
 
@@ -84,14 +85,13 @@ async def survey_upload_response_task(request):
         survey_resp = response["response"]
 
         if request.participant:
-            participant = request.participant
             client.upload_participant(
-                participant.first,
-                participant.last,
-                participant.email,
+                request.participant.first,
+                request.participant.last,
+                request.participant.email,
                 request.responseId,
-                participant.time,
-                participant.date,
+                request.participant.time,
+                request.participant.date,
                 survey_resp["ethnicity"],
                 ", ".join(
                     survey_resp["race"]
@@ -102,14 +102,33 @@ async def survey_upload_response_task(request):
                 survey_resp["skin_tone"],
             )
 
+            crud.create_participant(
+                models.ParticipantModel(
+                    first=request.participant.first,
+                    last=request.participant.last,
+                    email=request.participant.email,
+                    response_id=request.responseId,
+                    time=request.participant.time,
+                    date=request.participant.date,
+                    ethnicity=survey_resp["ethnicity"],
+                    race=", ".join(
+                        survey_resp["race"]
+                    ),  # Can have more than one value in a list
+                    gender=survey_resp["gender"],
+                    age=survey_resp["age"],
+                    income=survey_resp["income"],
+                    skin_tone=survey_resp["skin_tone"],
+                )
+            )
+
         # call function that queries ES for all analytics entries (flow interactionId) with responseId
-        interactionIds = export_client.export_response(request.responseId, response)
+        # interactionIds = export_client.export_response(request.responseId, response)
 
-        log.info("Analytics updated, beginning gdrive export.")
+        # log.info("Analytics updated, beginning gdrive export.")
 
-        # export list of interactionIds to gdrive
-        for id in interactionIds:
-            await upload_file(id)
+        # # export list of interactionIds to gdrive
+        # for id in interactionIds:
+        #     await upload_file(id)
     except error.ExportError as e:
         log.error(e.args)
 

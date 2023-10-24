@@ -10,10 +10,9 @@ class ParticipantModel(Base):
     __tablename__ = "participant"
 
     id = sqla.Column(sqla.Integer, primary_key=True, index=True)
-    first = sqla.Column(sqla.String)
-    last = sqla.Column(sqla.String)
-    email = sqla.Column(sqla.String)
+    survey_id = sqla.Column(sqla.String)
     response_id = sqla.Column(sqla.String)
+    rules_consent_id = sqla.Column(sqla.String)
     time = sqla.Column(sqla.String)
     date = sqla.Column(sqla.String)
     ethnicity = sqla.Column(sqla.String)
@@ -27,11 +26,12 @@ class ParticipantModel(Base):
         return [
             index,
             self.id,
-            self.first,
-            self.last,
-            self.email,
+            self.survey_id,
             self.response_id,
-            self.datetime,
+            self.rules_consent_id,
+            self.contact_id,
+            self.time,
+            self.date,
             self.ethnicity,
             self.gender,
             self.income,

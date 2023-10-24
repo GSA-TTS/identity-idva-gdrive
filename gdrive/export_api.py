@@ -105,10 +105,9 @@ async def survey_upload_response_task(request):
 
             crud.create_participant(
                 models.ParticipantModel(
-                    first=participant.first,
-                    last=participant.last,
-                    email=participant.email,
+                    survey_id=request.surveyId,
                     response_id=request.responseId,
+                    rules_consent_id=survey_resp["rules_consent_id"],
                     time=participant.time,
                     date=participant.date,
                     ethnicity=survey_resp["ethnicity"],

@@ -34,6 +34,12 @@ pre-commit install
 -- TODO set up new user for alembic? 
 ALTER ROLE postgres SET search_path = gdrive;
 ```
+```ini
+# Update Alembic connection string in Alembic.ini
+sqlalchemy.url = postgresql://postgres:{PASSWORD}@{URL}:{PORT}
+```
+
+
 ```shell
 # Updates the empty db schema with all of the DDL app dependencies
 alembic upgrade head

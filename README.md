@@ -12,6 +12,7 @@ Make sure you have the following installed if you intend to build the project lo
 ### Development Setup
 To set up your environment, run the following commands (or the equivalent
 commands if not using a bash-like terminal):
+
 ```shell
 # Clone the project
 git clone https://github.com/GSA-TTS/identity-idva-gdrive
@@ -25,9 +26,18 @@ source .venv/bin/activate
 # Install dependencies and pre-commit hooks
 python -m pip install -r requirements-dev.txt
 pre-commit install
-
-The project can be ran locally with:
+```
+### Database Setup & Usage
+- Install Postgres
+```sql
+-- set default schema for postgres, the user alembic uses to run queries on
+-- TODO set up new user for alembic? 
+ALTER ROLE postgres SET search_path = gdrive;
+```
 ```shell
+# Updates the empty db schema with all of the DDL app dependencies
+alembic upgrade head
+#The project can be ran locally with:
 uvicorn gdrive.main:app
 ```
 

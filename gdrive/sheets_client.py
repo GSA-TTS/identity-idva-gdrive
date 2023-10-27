@@ -72,7 +72,7 @@ def update_cell_value(
 def add_pivot_tables(
     sheets_id: str,
     target_page_id: str,
-    pivot_table_definition: object,
+    pt_def: object,
     row_idx: int = 0,
     col_idx: int = 0,
 ):
@@ -82,7 +82,7 @@ def add_pivot_tables(
     Args:
         sheets_id (str): ID for the sheets object
         target_page_id (str): ID for the target page of the sheets object, (Sheet1 is always 0)
-        pivot_table_definition (object): JSON encoded dict
+        pt_def (object): JSON encoded dict
         row_idx (int): Index of the row to write the start of the table
             default: 0
         col_idx (int): Index of the column to write the start of the table
@@ -97,7 +97,7 @@ def add_pivot_tables(
                 "rows": {
                     # I would need to write a whole library to parameterize this well so
                     # Client Code will just need to pass the JSON definitions in.
-                    "values": pivot_table_definition
+                    "values": pt_def
                 },
                 "start": {
                     "sheetId": target_page_id,
@@ -233,143 +233,140 @@ def create_pivot_tables(
 
 
 def create_first_visit_pt(sheets_id, page_id, col_dict):
-    # Add first visit pivot table, Facebook
+    first_visit_facebook_pt_def = {
+        "pivotTable": {
+            "source": {
+                # First Sheet (Sheet1) is always ID 0
+                "sheetId": 0,
+            },
+            "rows": [
+                {
+                    "sourceColumnOffset": col_dict["eventName"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["firstUserSource"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["eventCount"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+            ],
+            "filterSpecs": [
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "first_visit",
+                                }
+                            ],
+                        },
+                        "visibleByDefault": True,
+                    },
+                    "columnOffsetIndex": col_dict["eventName"],
+                },
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "facebook",
+                                },
+                            ],
+                        },
+                        "visibleByDefault": True,
+                    },
+                    "columnOffsetIndex": col_dict["firstUserSource"],
+                },
+            ],
+            "values": [
+                {
+                    "summarizeFunction": "SUM",
+                    "sourceColumnOffset": col_dict["eventCount"],
+                }
+            ],
+            "valueLayout": "HORIZONTAL",
+        }
+    }
+    first_visit_rt_pt_def = {
+        "pivotTable": {
+            "source": {
+                # First Sheet (Sheet1) is always ID 0
+                "sheetId": 0,
+            },
+            "rows": [
+                {
+                    "sourceColumnOffset": col_dict["eventName"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["firstUserSource"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["eventCount"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+            ],
+            "filterSpecs": [
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "first_visit",
+                                }
+                            ],
+                        },
+                        "visibleByDefault": True,
+                    },
+                    "columnOffsetIndex": col_dict["eventName"],
+                },
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "rt",
+                                },
+                            ],
+                        },
+                        "visibleByDefault": True,
+                    },
+                    "columnOffsetIndex": col_dict["firstUserSource"],
+                },
+            ],
+            "values": [
+                {
+                    "summarizeFunction": "SUM",
+                    "sourceColumnOffset": col_dict["eventCount"],
+                }
+            ],
+            "valueLayout": "HORIZONTAL",
+        }
+    }
+
     add_pivot_tables(
         sheets_id,
         page_id,
-        (
-            {
-                "pivotTable": {
-                    "source": {
-                        # First Sheet (Sheet1) is always ID 0
-                        "sheetId": 0,
-                    },
-                    "rows": [
-                        {
-                            "sourceColumnOffset": col_dict["eventName"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                        {
-                            "sourceColumnOffset": col_dict["firstUserSource"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                        {
-                            "sourceColumnOffset": col_dict["eventCount"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                    ],
-                    "filterSpecs": [
-                        {
-                            "filterCriteria": {
-                                "condition": {
-                                    "type": "TEXT_CONTAINS",
-                                    "values": [
-                                        {
-                                            "userEnteredValue": "first_visit",
-                                        }
-                                    ],
-                                },
-                                "visibleByDefault": True,
-                            },
-                            "columnOffsetIndex": col_dict["eventName"],
-                        },
-                        {
-                            "filterCriteria": {
-                                "condition": {
-                                    "type": "TEXT_CONTAINS",
-                                    "values": [
-                                        {
-                                            "userEnteredValue": "facebook",
-                                        },
-                                    ],
-                                },
-                                "visibleByDefault": True,
-                            },
-                            "columnOffsetIndex": col_dict["firstUserSource"],
-                        },
-                    ],
-                    "values": [
-                        {
-                            "summarizeFunction": "SUM",
-                            "sourceColumnOffset": col_dict["eventCount"],
-                        }
-                    ],
-                    "valueLayout": "HORIZONTAL",
-                }
-            }
-        ),
+        first_visit_facebook_pt_def,
     )
-    # Add first visit pivot table, RT
     add_pivot_tables(
         sheets_id,
         page_id,
-        (
-            {
-                "pivotTable": {
-                    "source": {
-                        # First Sheet (Sheet1) is always ID 0
-                        "sheetId": 0,
-                    },
-                    "rows": [
-                        {
-                            "sourceColumnOffset": col_dict["eventName"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                        {
-                            "sourceColumnOffset": col_dict["firstUserSource"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                        {
-                            "sourceColumnOffset": col_dict["eventCount"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                    ],
-                    "filterSpecs": [
-                        {
-                            "filterCriteria": {
-                                "condition": {
-                                    "type": "TEXT_CONTAINS",
-                                    "values": [
-                                        {
-                                            "userEnteredValue": "first_visit",
-                                        }
-                                    ],
-                                },
-                                "visibleByDefault": True,
-                            },
-                            "columnOffsetIndex": col_dict["eventName"],
-                        },
-                        {
-                            "filterCriteria": {
-                                "condition": {
-                                    "type": "TEXT_CONTAINS",
-                                    "values": [
-                                        {
-                                            "userEnteredValue": "rt",
-                                        },
-                                    ],
-                                },
-                                "visibleByDefault": True,
-                            },
-                            "columnOffsetIndex": col_dict["firstUserSource"],
-                        },
-                    ],
-                    "values": [
-                        {
-                            "summarizeFunction": "SUM",
-                            "sourceColumnOffset": col_dict["eventCount"],
-                        }
-                    ],
-                    "valueLayout": "HORIZONTAL",
-                }
-            }
-        ),
+        first_visit_rt_pt_def,
         row_idx=0,
         col_idx=5,
     )
@@ -377,232 +374,212 @@ def create_first_visit_pt(sheets_id, page_id, col_dict):
 
 def create_session_start_pt(sheets_id, page_id, col_dict):
     # Add sessions pivot table, facebook
-    add_pivot_tables(
-        sheets_id,
-        page_id,
-        (
-            {
-                "pivotTable": {
-                    "source": {
-                        # First Sheet (Sheet1) is always ID 0
-                        "sheetId": 0,
+    sessions_facebook_pt_def = {
+        "pivotTable": {
+            "source": {
+                # First Sheet (Sheet1) is always ID 0
+                "sheetId": 0,
+            },
+            "rows": [
+                {
+                    "sourceColumnOffset": col_dict["eventName"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["firstUserSource"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["eventCount"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+            ],
+            "filterSpecs": [
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "session_start",
+                                }
+                            ],
+                        },
+                        "visibleByDefault": True,
                     },
-                    "rows": [
-                        {
-                            "sourceColumnOffset": col_dict["eventName"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                        {
-                            "sourceColumnOffset": col_dict["firstUserSource"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                        {
-                            "sourceColumnOffset": col_dict["eventCount"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                    ],
-                    "filterSpecs": [
-                        {
-                            "filterCriteria": {
-                                "condition": {
-                                    "type": "TEXT_CONTAINS",
-                                    "values": [
-                                        {
-                                            "userEnteredValue": "session_start",
-                                        }
-                                    ],
+                    "columnOffsetIndex": col_dict["eventName"],
+                },
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "facebook",
                                 },
-                                "visibleByDefault": True,
-                            },
-                            "columnOffsetIndex": col_dict["eventName"],
+                            ],
                         },
-                        {
-                            "filterCriteria": {
-                                "condition": {
-                                    "type": "TEXT_CONTAINS",
-                                    "values": [
-                                        {
-                                            "userEnteredValue": "facebook",
-                                        },
-                                    ],
-                                },
-                                "visibleByDefault": True,
-                            },
-                            "columnOffsetIndex": col_dict["firstUserSource"],
-                        },
-                    ],
-                    "values": [
-                        {
-                            "summarizeFunction": "SUM",
-                            "sourceColumnOffset": col_dict["eventCount"],
-                        }
-                    ],
-                    "valueLayout": "HORIZONTAL",
-                }
-            }
-        ),
-    )
-    # Add sessions pivot table, rt
-    add_pivot_tables(
-        sheets_id,
-        page_id,
-        (
-            {
-                "pivotTable": {
-                    "source": {
-                        # First Sheet (Sheet1) is always ID 0
-                        "sheetId": 0,
+                        "visibleByDefault": True,
                     },
-                    "rows": [
-                        {
-                            "sourceColumnOffset": col_dict["eventName"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                        {
-                            "sourceColumnOffset": col_dict["firstUserSource"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                        {
-                            "sourceColumnOffset": col_dict["eventCount"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                    ],
-                    "filterSpecs": [
-                        {
-                            "filterCriteria": {
-                                "condition": {
-                                    "type": "TEXT_CONTAINS",
-                                    "values": [
-                                        {
-                                            "userEnteredValue": "session_start",
-                                        }
-                                    ],
-                                },
-                                "visibleByDefault": True,
-                            },
-                            "columnOffsetIndex": col_dict["eventName"],
-                        },
-                        {
-                            "filterCriteria": {
-                                "condition": {
-                                    "type": "TEXT_CONTAINS",
-                                    "values": [
-                                        {
-                                            "userEnteredValue": "rt",
-                                        },
-                                    ],
-                                },
-                                "visibleByDefault": True,
-                            },
-                            "columnOffsetIndex": col_dict["firstUserSource"],
-                        },
-                    ],
-                    "values": [
-                        {
-                            "summarizeFunction": "SUM",
-                            "sourceColumnOffset": col_dict["eventCount"],
-                        }
-                    ],
-                    "valueLayout": "HORIZONTAL",
+                    "columnOffsetIndex": col_dict["firstUserSource"],
+                },
+            ],
+            "values": [
+                {
+                    "summarizeFunction": "SUM",
+                    "sourceColumnOffset": col_dict["eventCount"],
                 }
-            }
-        ),
-        row_idx=0,
-        col_idx=5,
-    )
+            ],
+            "valueLayout": "HORIZONTAL",
+        }
+    }
+    sessions_rt_pt_def = {
+        "pivotTable": {
+            "source": {
+                # First Sheet (Sheet1) is always ID 0
+                "sheetId": 0,
+            },
+            "rows": [
+                {
+                    "sourceColumnOffset": col_dict["eventName"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["firstUserSource"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["eventCount"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+            ],
+            "filterSpecs": [
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "session_start",
+                                }
+                            ],
+                        },
+                        "visibleByDefault": True,
+                    },
+                    "columnOffsetIndex": col_dict["eventName"],
+                },
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "rt",
+                                },
+                            ],
+                        },
+                        "visibleByDefault": True,
+                    },
+                    "columnOffsetIndex": col_dict["firstUserSource"],
+                },
+            ],
+            "values": [
+                {
+                    "summarizeFunction": "SUM",
+                    "sourceColumnOffset": col_dict["eventCount"],
+                }
+            ],
+            "valueLayout": "HORIZONTAL",
+        }
+    }
+
+    add_pivot_tables(sheets_id, page_id, sessions_facebook_pt_def)
+    add_pivot_tables(sheets_id, page_id, sessions_rt_pt_def, row_idx=0, col_idx=5)
 
 
 def create_clicks_pt(sheets_id, page_id, col_dict):
-    add_pivot_tables(
-        sheets_id,
-        page_id,
-        (
-            {
-                "pivotTable": {
-                    "source": {
-                        # First Sheet (Sheet1) is always ID 0
-                        "sheetId": 0,
-                    },
-                    "rows": [
-                        {
-                            "sourceColumnOffset": col_dict["eventName"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                        {
-                            "sourceColumnOffset": col_dict["eventCount"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                    ],
-                    "values": [
-                        {
-                            "summarizeFunction": "SUM",
-                            "sourceColumnOffset": col_dict["eventCount"],
-                        }
-                    ],
-                    "valueLayout": "HORIZONTAL",
+    clicks_pt_def = {
+        "pivotTable": {
+            "source": {
+                # First Sheet (Sheet1) is always ID 0
+                "sheetId": 0,
+            },
+            "rows": [
+                {
+                    "sourceColumnOffset": col_dict["eventName"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["eventCount"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+            ],
+            "values": [
+                {
+                    "summarizeFunction": "SUM",
+                    "sourceColumnOffset": col_dict["eventCount"],
                 }
-            }
-        ),
-    )
+            ],
+            "valueLayout": "HORIZONTAL",
+        }
+    }
+
+    add_pivot_tables(sheets_id, page_id, clicks_pt_def)
 
 
 def create_feedback_pt(sheets_id, page_id, col_dict):
-    add_pivot_tables(
-        sheets_id,
-        page_id,
-        (
-            {
-                "pivotTable": {
-                    "source": {
-                        "sheetId": 0,
+    feedback_pt_def = {
+        "pivotTable": {
+            "source": {
+                "sheetId": 0,
+            },
+            "rows": [
+                {
+                    "sourceColumnOffset": col_dict["eventName"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["eventCount"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+            ],
+            "filterSpecs": [
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "feedback",
+                                }
+                            ],
+                        },
+                        "visibleByDefault": True,
                     },
-                    "rows": [
-                        {
-                            "sourceColumnOffset": col_dict["eventName"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                        {
-                            "sourceColumnOffset": col_dict["eventCount"],
-                            "showTotals": True,
-                            "sortOrder": "ASCENDING",
-                        },
-                    ],
-                    "filterSpecs": [
-                        {
-                            "filterCriteria": {
-                                "condition": {
-                                    "type": "TEXT_CONTAINS",
-                                    "values": [
-                                        {
-                                            "userEnteredValue": "feedback",
-                                        }
-                                    ],
-                                },
-                                "visibleByDefault": True,
-                            },
-                            "columnOffsetIndex": col_dict["linkUrl"],
-                        },
-                    ],
-                    "values": [
-                        {
-                            "summarizeFunction": "SUM",
-                            "sourceColumnOffset": col_dict["eventCount"],
-                        }
-                    ],
-                    "valueLayout": "HORIZONTAL",
+                    "columnOffsetIndex": col_dict["linkUrl"],
+                },
+            ],
+            "values": [
+                {
+                    "summarizeFunction": "SUM",
+                    "sourceColumnOffset": col_dict["eventCount"],
                 }
-            }
-        ),
-    )
+            ],
+            "valueLayout": "HORIZONTAL",
+        }
+    }
+
+    add_pivot_tables(sheets_id, page_id, feedback_pt_def)
 
 
 def upload_participant(

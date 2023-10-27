@@ -4,6 +4,7 @@ Google Analytics Rest API
 
 from datetime import datetime, timedelta
 import logging
+from typing import Optional
 
 import fastapi
 from pydantic import BaseModel
@@ -17,45 +18,43 @@ router = fastapi.APIRouter()
 
 
 class AnalyticsRequest(BaseModel):
-    startDate: str = None
-    endDate: str = None
+    startDate: str
+    endDate: str
 
 
 @router.post("/analytics")
-async def run_analytics_default():
-    # Default behaviour for the system is run a report from previous day
-    target_date = datetime.today() - timedelta(days=1)
-    run_analytics(target_date, None)
+async def run_analytics_default(req: Optional[AnalyticsRequest] = None):
+    start = None
+    end = None
+    message = None
+    if req is None:
+        start = datetime.today() - timedelta(days=1)
+        message = "Analytics report for %s complete." % (datetime.date(start))
+    else:
+        try:
+            start = datetime.strptime(req.startDate, analytics_client.API_DATE_FORMAT)
+            end = datetime.strptime(req.endDate, analytics_client.API_DATE_FORMAT)
+            message = "Analytics report for %s - %s complete." % (
+                datetime.date(start),
+                datetime.date(end),
+            )
+        except ValueError as err:
+            # @suppress("py/stack-trace-exposure")
+            return responses.JSONResponse(
+                status_code=422,
+                content="Failed (invalid date parameters): %s" % (err),
+            )
+
+    run_analytics(start, end)
     return responses.JSONResponse(
         status_code=202,
-        content="Analytics report for %s complete." % (datetime.date(datetime.today())),
+        content=message,
     )
 
 
-@router.post("/analytics/daterange")
-async def run_analytics_daterange(req: AnalyticsRequest):
-    try:
-        start_date = datetime.strptime(req.startDate, analytics_client.API_DATE_FORMAT)
-        end_date = datetime.strptime(req.endDate, analytics_client.API_DATE_FORMAT)
-
-        run_analytics(start_date, end_date)
-        return responses.JSONResponse(
-            status_code=202,
-            content="Analytics report for %s - %s complete."
-            % (datetime.date(start_date), datetime.date(end_date)),
-        )
-
-    except ValueError as err:
-        # @suppress("py/stack-trace-exposure")
-        return responses.JSONResponse(
-            status_code=422,
-            content="Failed (invalid date parameters): %s" % (err),
-        )
-
-
 @router.post("/analytics/list")
-async def list_accounts(backgroud_tasks: BackgroundTasks):
-    backgroud_tasks.add_task(list_accounts_task)
+async def list_accounts():
+    list_accounts_task()
     return responses.JSONResponse(
         status_code=202, content="List request is being processed."
     )
@@ -69,12 +68,12 @@ def run_analytics(start_date: datetime, end_date: datetime):
 
         analytics_df = analytics_client.create_df_from_analytics_response(response)
         sheets_id = export(analytics_df, start_date, end_date)
-        analytics_export_post_processing(analytics_df, sheets_id=sheets_id)
+        create_pages_and_pivot_tables(analytics_df, sheets_id=sheets_id)
     except Exception as e:
         log.error(e)
 
 
-async def list_accounts_task():
+def list_accounts_task():
     try:
         list_response = analytics_client.list()
         if list_response is not None:
@@ -125,7 +124,7 @@ def export(
     return sheets_id
 
 
-def analytics_export_post_processing(df: pd.DataFrame, sheets_id: str):
+def create_pages_and_pivot_tables(df: pd.DataFrame, sheets_id: str):
     """
     Add new pages and pivot tables.
 

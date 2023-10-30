@@ -8,10 +8,8 @@ from typing import Optional
 
 import fastapi
 from pydantic import BaseModel
-from fastapi import BackgroundTasks, responses
-import pandas as pd
-
-from gdrive import error, settings, analytics_client, sheets_client, drive_client
+from fastapi import responses
+from gdrive import analytics_client, idva_flow_analytics
 
 log = logging.getLogger(__name__)
 router = fastapi.APIRouter()
@@ -54,7 +52,7 @@ async def run_analytics_default(req: Optional[AnalyticsRequest] = None):
 
 @router.post("/analytics/list")
 async def list_accounts():
-    list_accounts_task()
+    list_accounts()
     return responses.JSONResponse(
         status_code=202, content="List request is being processed."
     )
@@ -62,18 +60,12 @@ async def list_accounts():
 
 def run_analytics(start_date: datetime, end_date: datetime):
     try:
-        response = analytics_client.download(
-            settings.ANALYTICS_PROPERTY_ID, start_date, end_date
-        )
-
-        analytics_df = analytics_client.create_df_from_analytics_response(response)
-        sheets_id = export(analytics_df, start_date, end_date)
-        create_pages_and_pivot_tables(analytics_df, sheets_id=sheets_id)
+        idva_flow_analytics.create_report(start_date, end_date)
     except Exception as e:
         log.error(e)
 
 
-def list_accounts_task():
+def list_accounts():
     try:
         list_response = analytics_client.list()
         if list_response is not None:
@@ -89,77 +81,3 @@ def list_accounts_task():
             )
     except Exception as e:
         log.error(e.args)
-
-
-def export(
-    df: pd.DataFrame, date_of_report: datetime, end_date: datetime = None
-) -> str:
-    """
-    Transform the downloaded response from the google analytics API into a
-    Google Sheets Object.
-
-    This function first touches a Google Sheets object with the drive API, then
-    writes the analytics data to that object. As of right now there is no way to do
-    this in one API transaction.
-
-    Args:
-        df (pandas.DataFrame): Tabular data to export to Google Sheets object
-        date_of_report (datetime): Date the report was run
-    Returns:
-        str: Google Sheets ID of the new Sheets object
-    """
-    filename_str = generate_filename(date_of_report, end_date)
-    analytics_folder_id = drive_client.create_folder(
-        "Google Analytics", parent_id=settings.ANALYTICS_ROOT
-    )
-
-    # We have to do this in multiple steps with more than one client because the Sheets API
-    # doesnt support opening a file in a given directory.
-    sheets_id = drive_client.create_empty_spreadsheet(filename_str, analytics_folder_id)
-    log.info("Uploading to folder %s (%s)" % ("Google Analytics", analytics_folder_id))
-    result = sheets_client.export_df_to_gdrive_speadsheet(df, sheets_id)
-    log.info(
-        "Successfully created %s (%s)" % (filename_str, result.get("spreadsheetId"))
-    )
-    return sheets_id
-
-
-def create_pages_and_pivot_tables(df: pd.DataFrame, sheets_id: str):
-    """
-    Add new pages and pivot tables.
-
-    This function is fairly naive and inefficient. If we ever want to make Google Sheets
-    more often than once a day, we should refactor this to limit the number of API transactions.
-
-    Args:
-        df (pandas.DataFrame): Tabular data in the spreadsheet
-        sheets_id (str): Google Sheets object ID
-    """
-
-    page1 = "Rekrewt Pivot Table - First Visit"
-    page2 = "Rekrewt Pivot Table - Sessions"
-    page3 = "GSA Use Pivot Table"
-    page4 = "Completions"
-
-    new_sheet_name_to_id = sheets_client.add_new_pages(
-        [page1, page2, page3, page4], sheets_id
-    )
-    log.info("Added %s pages to %s" % (len(new_sheet_name_to_id.keys()), sheets_id))
-    sheets_client.create_pivot_tables(
-        df, (page1, page2, page3, page4), new_sheet_name_to_id, sheets_id
-    )
-
-
-def generate_filename(date: datetime, end_date: datetime = None):
-    """
-    Return filename for the new spreadsheet to be saved as
-
-    Args:
-        date (datetime): date to format
-    Return:
-        str: Formatted Date
-    """
-    ret = date.strftime("%Y%m%d")
-    if end_date is not None and end_date != date:
-        ret += "-%s" % (end_date.strftime("%Y%m%d"))
-    return ret

@@ -28,18 +28,22 @@ python -m pip install -r requirements-dev.txt
 pre-commit install
 ```
 ### Database Setup & Usage
+
 - Install Postgres
 ```sql
--- set default schema for postgres, the user alembic uses to run queries on
--- TODO set up new user for alembic? 
-ALTER ROLE postgres SET search_path = gdrive;
+create schema if not exists gdrive;
+alter role postgres set search_path = gdrive;
 ```
+Once the above SQL has been run on postgres, alembic can be used to build the DDL Dependencies.
+
+Alembic uses the same connection string as the gdrive module, loading the 
+value from `settings.DB_URI`. In case a different URI is needed, the URI alembic 
+uses can be configured manually in `alembic.ini`.
 ```ini
 # Update Alembic connection string in Alembic.ini
 sqlalchemy.url = postgresql://postgres:{PASSWORD}@{URL}:{PORT}
 ```
-
-
+Use alembic to build database entities, and app is ready.
 ```shell
 # Updates the empty db schema with all of the DDL app dependencies
 alembic upgrade head

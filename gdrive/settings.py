@@ -32,6 +32,8 @@ ES_PORT = os.getenv("ES_PORT")
 QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
 QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
 
+DB_URI = None
+
 try:
     vcap_services = os.getenv("VCAP_SERVICES")
     config = {}
@@ -56,8 +58,9 @@ try:
     SHEETS_ID = config["sheets_id"]
 
     # Database connections
-    URI = db_config["uri"]
-    SCHEMA = db_config["schema_name"]
+    if db_config is not None:
+        DB_URI = db_config["uri"]
+        SCHEMA = db_config["schema_name"]
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")
     log.debug("Error: %s", str(err))

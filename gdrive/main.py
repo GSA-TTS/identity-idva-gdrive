@@ -7,11 +7,8 @@ import fastapi
 import starlette_prometheus
 
 from . import api, export_api, settings
-from gdrive.database import database, models
 
 logging.basicConfig(level=settings.LOG_LEVEL)
-
-models.Base.metadata.create_all(bind=database.engine)
 
 app = fastapi.FastAPI()
 

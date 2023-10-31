@@ -7,7 +7,9 @@ from unittest.mock import MagicMock
 from fastapi import testclient
 
 # pylint: disable=wrong-import-position
-sys.modules["gdrive.client"] = MagicMock()
+sys.modules["gdrive.drive_client"] = MagicMock()
+sys.modules["gdrive.sheets_client"] = MagicMock()
+sys.modules["gdrive.analytics_client"] = MagicMock()
 from gdrive import main
 
 client = testclient.TestClient(main.app)

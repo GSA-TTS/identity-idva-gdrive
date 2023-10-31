@@ -7,7 +7,6 @@ import logging
 import os
 
 log = logging.getLogger(__name__)
-
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG set is set to True if env var is "True"
 DEBUG = os.getenv("DEBUG", "False") == "True"
@@ -33,6 +32,7 @@ QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
 QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
 
 DB_URI = None
+db_config = None
 
 try:
     vcap_services = os.getenv("VCAP_SERVICES")
@@ -48,9 +48,10 @@ try:
         with open(SERVICE_ACCOUNT_FILE) as file:
             log.info("Loading credentials from creds file")
             config = json.load(file)
-        with open(DATABASE_CONFIG_FILE) as file:
-            log.info("Loading DB credentials")
-            db_config = json.load(file)
+        if os.path.isfile(DATABASE_CONFIG_FILE):
+            with open(DATABASE_CONFIG_FILE) as file:
+                log.info("Loading DB credentials")
+                db_config = json.load(file)
 
     CREDENTIALS = config["credentials"]
     ROOT_DIRECTORY = config["root_directory"]

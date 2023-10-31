@@ -103,24 +103,23 @@ async def survey_upload_response_task(request):
                 survey_resp["skin_tone"],
             )
 
-            if database.db_ready():
-                crud.create_participant(
-                    models.ParticipantModel(
-                        survey_id=request.surveyId,
-                        response_id=request.responseId,
-                        rules_consent_id=survey_resp["rules_consent_id"],
-                        time=participant.time,
-                        date=participant.date,
-                        ethnicity=survey_resp["ethnicity"],
-                        race=", ".join(
-                            survey_resp["race"]
-                        ),  # Can have more than one value in a list
-                        gender=survey_resp["gender"],
-                        age=survey_resp["age"],
-                        income=survey_resp["income"],
-                        skin_tone=survey_resp["skin_tone"],
-                    )
+            crud.create_participant(
+                models.ParticipantModel(
+                    survey_id=request.surveyId,
+                    response_id=request.responseId,
+                    rules_consent_id=survey_resp["rules_consent_id"],
+                    time=participant.time,
+                    date=participant.date,
+                    ethnicity=survey_resp["ethnicity"],
+                    race=", ".join(
+                        survey_resp["race"]
+                    ),  # Can have more than one value in a list
+                    gender=survey_resp["gender"],
+                    age=survey_resp["age"],
+                    income=survey_resp["income"],
+                    skin_tone=survey_resp["skin_tone"],
                 )
+            )
 
         # call function that queries ES for all analytics entries (flow interactionId) with responseId
         interactionIds = export_client.export_response(request.responseId, response)

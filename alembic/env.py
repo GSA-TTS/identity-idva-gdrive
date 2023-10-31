@@ -32,6 +32,10 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+if not settings.DB_URI:
+    print("Database has not been configured.")
+    exit()
+
 config.set_main_option("sqlalchemy.url", settings.DB_URI)
 
 

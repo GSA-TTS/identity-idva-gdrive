@@ -18,7 +18,9 @@ from gdrive import settings
 
 log = logging.getLogger(__name__)
 
-creds = service_account.Credentials.from_service_account_info(settings.CREDENTIALS)
+creds = service_account.Credentials.from_service_account_info(
+    settings.ANALYTICS_CREDENTIALS
+)
 API_DATE_FORMAT = "%Y-%m-%d"
 
 """

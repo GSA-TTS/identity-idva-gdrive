@@ -65,7 +65,7 @@ def create_pages_and_pivot_tables(df: pd.DataFrame, sheets_id: str):
     page1 = "Rekrewt Pivot Table - First Visit"
     page2 = "Rekrewt Pivot Table - Sessions"
     page3 = "GSA Use Pivot Table"
-    page4 = "Completions"
+    page4 = "Conversions"
 
     new_sheet_name_to_id = sheets_client.add_new_pages(
         [page1, page2, page3, page4], sheets_id

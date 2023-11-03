@@ -7,6 +7,7 @@ import logging
 import os
 
 log = logging.getLogger(__name__)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG set is set to True if env var is "True"
 DEBUG = os.getenv("DEBUG", "False") == "True"
@@ -14,6 +15,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 LOG_LEVEL = os.getenv("LOG_LEVEL", logging.getLevelName(logging.INFO))
 
 SCOPES = [
+    "https://www.googleapis.com/auth/analytics",
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/spreadsheets",
 ]
@@ -24,6 +26,9 @@ DATABASE_CONFIG_FILE = "db_config.json"
 ROOT_DIRECTORY = ""
 CODE_NAMES = None
 CREDENTIALS = None
+ANALYTICS_ROOT = None
+ANALYTICS_PROPERTY_ID = None
+ANALYTICS_CREDENTIALS = None
 
 ES_HOST = os.getenv("ES_HOST")
 ES_PORT = os.getenv("ES_PORT")
@@ -32,13 +37,16 @@ QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
 QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
 
 DB_URI = None
-db_config = None
+SCHEMA = "gdrive"
 
 try:
     vcap_services = os.getenv("VCAP_SERVICES")
+    db_config = None
     config = {}
     if vcap_services:
         user_services = json.loads(vcap_services)["user-provided"]
+        DB_URI = json.loads(vcap_services)["aws-rds"][0]["credentials"]["uri"]
+
         for service in user_services:
             if service["name"] == "gdrive":
                 log.info("Loading credentials from env var")
@@ -54,6 +62,9 @@ try:
                 db_config = json.load(file)
 
     CREDENTIALS = config["credentials"]
+    ANALYTICS_ROOT = config["analytics_root"]
+    ANALYTICS_PROPERTY_ID = config["analytics_property_id"]
+    ANALYTICS_CREDENTIALS = config["analytics_credentials"]
     ROOT_DIRECTORY = config["root_directory"]
     CODE_NAMES = config["code_names"]
     SHEETS_ID = config["sheets_id"]
@@ -61,7 +72,7 @@ try:
     # Database connections
     if db_config is not None:
         DB_URI = db_config["uri"]
-        SCHEMA = db_config["schema_name"]
+
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")
     log.debug("Error: %s", str(err))

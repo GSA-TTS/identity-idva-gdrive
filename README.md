@@ -31,8 +31,8 @@ pre-commit install
 
 - Install Postgres
 ```sql
-create schema if not exists gdrive;
-alter role postgres set search_path = gdrive;
+create schema if not exists idva;
+alter role postgres set search_path = idva;
 ```
 Once the above SQL has been run on postgres, alembic can be used to build the DDL Dependencies.
 
@@ -45,10 +45,13 @@ sqlalchemy.url = postgresql://postgres:{PASSWORD}@{URL}:{PORT}
 ```
 Use alembic to build database entities, and app is ready.
 ```shell
+# This step may be nessessary if doing a rebuild of the whole schema, 
+# clean install does not need to worry about this step. 
+$ alembic downgrade base
 # Updates the empty db schema with all of the DDL app dependencies
-alembic upgrade head
+$ alembic upgrade head
 #The project can be ran locally with:
-uvicorn gdrive.main:app
+$ uvicorn gdrive.main:app
 ```
 
 ### Running the application

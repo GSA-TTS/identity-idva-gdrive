@@ -65,7 +65,7 @@ def create_pages_and_pivot_tables(df: pd.DataFrame, sheets_id: str):
     page1 = "Rekrewt Pivot Table - First Visit"
     page2 = "Rekrewt Pivot Table - Sessions"
     page3 = "GSA Use Pivot Table"
-    page4 = "Completions"
+    page4 = "Conversions"
 
     new_sheet_name_to_id = sheets_client.add_new_pages(
         [page1, page2, page3, page4], sheets_id
@@ -86,12 +86,12 @@ def create_pivot_tables(
 
     create_first_visit_pt(sheets_id, names_to_id[page_names[0]], col_dict)
     log.info(
-        "Added 2 pivot tables to %s (%s)" % (page_names[0], names_to_id[page_names[0]])
+        "Added 3 pivot tables to %s (%s)" % (page_names[0], names_to_id[page_names[0]])
     )
 
     create_session_start_pt(sheets_id, names_to_id[page_names[1]], col_dict)
     log.info(
-        "Added 2 pivot tables to %s (%s)" % (page_names[1], names_to_id[page_names[1]])
+        "Added 3 pivot tables to %s (%s)" % (page_names[1], names_to_id[page_names[1]])
     )
 
     create_clicks_pt(sheets_id, names_to_id[page_names[2]], col_dict)
@@ -111,7 +111,7 @@ def create_pivot_tables(
         sheets_id,
         page_names[0],
         "A18",
-        '=GETPIVOTDATA("SUM of eventCount",A1, "eventName", "first_visit") + GETPIVOTDATA("SUM of eventCount",F1, "eventName", "first_visit")',
+        '=GETPIVOTDATA("SUM of eventCount",A1, "eventName", "first_visit") + GETPIVOTDATA("SUM of eventCount",F1, "eventName", "first_visit") + GETPIVOTDATA("SUM of eventCount",K1, "eventName", "first_visit")',
     )
     log.info("Wrote totals to %s" % (page_names[0]))
 
@@ -120,7 +120,7 @@ def create_pivot_tables(
         sheets_id,
         page_names[1],
         "A18",
-        '=GETPIVOTDATA("SUM of eventCount",A1, "eventName", "session_start") + GETPIVOTDATA("SUM of eventCount",F1, "eventName", "session_start")',
+        '=GETPIVOTDATA("SUM of eventCount",A1, "eventName", "session_start") + GETPIVOTDATA("SUM of eventCount",F1, "eventName", "session_start") + GETPIVOTDATA("SUM of eventCount",K1, "eventName", "session_start")',
     )
     log.info("Wrote totals to %s" % (page_names[1]))
 
@@ -229,10 +229,72 @@ def create_first_visit_pt(sheets_id, page_id, col_dict):
                 {
                     "filterCriteria": {
                         "condition": {
-                            "type": "TEXT_CONTAINS",
+                            "type": "TEXT_EQ",
                             "values": [
                                 {
                                     "userEnteredValue": "rt",
+                                },
+                            ],
+                        },
+                        "visibleByDefault": True,
+                    },
+                    "columnOffsetIndex": col_dict["firstUserSource"],
+                },
+            ],
+            "values": [
+                {
+                    "summarizeFunction": "SUM",
+                    "sourceColumnOffset": col_dict["eventCount"],
+                }
+            ],
+            "valueLayout": "HORIZONTAL",
+        }
+    }
+    first_visit_craigslist_pt_def = {
+        "pivotTable": {
+            "source": {
+                # First Sheet (Sheet1) is always ID 0
+                "sheetId": 0,
+            },
+            "rows": [
+                {
+                    "sourceColumnOffset": col_dict["eventName"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["firstUserSource"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["eventCount"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+            ],
+            "filterSpecs": [
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "first_visit",
+                                }
+                            ],
+                        },
+                        "visibleByDefault": True,
+                    },
+                    "columnOffsetIndex": col_dict["eventName"],
+                },
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "craigslist",
                                 },
                             ],
                         },
@@ -262,6 +324,9 @@ def create_first_visit_pt(sheets_id, page_id, col_dict):
         first_visit_rt_pt_def,
         row_idx=0,
         col_idx=5,
+    )
+    sheets_client.add_pivot_tables(
+        sheets_id, page_id, first_visit_craigslist_pt_def, row_idx=0, col_idx=10
     )
 
 
@@ -370,10 +435,72 @@ def create_session_start_pt(sheets_id, page_id, col_dict):
                 {
                     "filterCriteria": {
                         "condition": {
-                            "type": "TEXT_CONTAINS",
+                            "type": "TEXT_EQ",
                             "values": [
                                 {
                                     "userEnteredValue": "rt",
+                                },
+                            ],
+                        },
+                        "visibleByDefault": True,
+                    },
+                    "columnOffsetIndex": col_dict["firstUserSource"],
+                },
+            ],
+            "values": [
+                {
+                    "summarizeFunction": "SUM",
+                    "sourceColumnOffset": col_dict["eventCount"],
+                }
+            ],
+            "valueLayout": "HORIZONTAL",
+        }
+    }
+    sessions_craigslist_pt_def = {
+        "pivotTable": {
+            "source": {
+                # First Sheet (Sheet1) is always ID 0
+                "sheetId": 0,
+            },
+            "rows": [
+                {
+                    "sourceColumnOffset": col_dict["eventName"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["firstUserSource"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+                {
+                    "sourceColumnOffset": col_dict["eventCount"],
+                    "showTotals": True,
+                    "sortOrder": "ASCENDING",
+                },
+            ],
+            "filterSpecs": [
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "session_start",
+                                }
+                            ],
+                        },
+                        "visibleByDefault": True,
+                    },
+                    "columnOffsetIndex": col_dict["eventName"],
+                },
+                {
+                    "filterCriteria": {
+                        "condition": {
+                            "type": "TEXT_CONTAINS",
+                            "values": [
+                                {
+                                    "userEnteredValue": "craigslist",
                                 },
                             ],
                         },
@@ -395,6 +522,9 @@ def create_session_start_pt(sheets_id, page_id, col_dict):
     sheets_client.add_pivot_tables(sheets_id, page_id, sessions_facebook_pt_def)
     sheets_client.add_pivot_tables(
         sheets_id, page_id, sessions_rt_pt_def, row_idx=0, col_idx=5
+    )
+    sheets_client.add_pivot_tables(
+        sheets_id, page_id, sessions_craigslist_pt_def, row_idx=0, col_idx=10
     )
 
 

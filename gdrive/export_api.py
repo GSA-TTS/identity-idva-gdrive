@@ -7,10 +7,10 @@ import json
 import logging
 
 import fastapi
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi import BackgroundTasks, responses
 
-from gdrive import export_client, client, settings, error
+from gdrive import export_client, drive_client, settings, error
 from gdrive.database import database, crud, models
 
 log = logging.getLogger(__name__)
@@ -24,8 +24,8 @@ async def upload_file(interactionId):
     export_bytes = io.BytesIO(
         export_client.codename(json.dumps(export_data, indent=2)).encode()
     )
-    parent = client.create_folder(interactionId, settings.ROOT_DIRECTORY)
-    client.upload_basic("analytics.json", parent, export_bytes)
+    parent = drive_client.create_folder(interactionId, settings.ROOT_DIRECTORY)
+    drive_client.upload_basic("analytics.json", parent, export_bytes)
 
 
 class ParticipantModel(BaseModel):
@@ -86,7 +86,7 @@ async def survey_upload_response_task(request):
 
         if request.participant:
             participant = request.participant
-            client.upload_participant(
+            drive_client.upload_participant(
                 participant.first,
                 participant.last,
                 participant.email,
@@ -140,7 +140,7 @@ class FindModel(BaseModel):
 
     responseId: str
     field: str
-    values: list[str]
+    values: list[str] = Field(..., min_items=1)
     result_field: str | None = None
 
 

@@ -12,13 +12,13 @@ from fastapi import Response, status
 from googleapiclient.http import HttpError
 from starlette.requests import Request
 
-from . import client, settings
+from . import drive_client, settings
 
 log = logging.getLogger(__name__)
 
 router = fastapi.APIRouter()
 
-client.init()
+drive_client.init()
 
 
 # Patch zip decodeExtra to ignore invalid extra data
@@ -50,16 +50,18 @@ async def upload_file(
 
         stream = io.BytesIO(body)
 
-        parent = client.create_folder(id, settings.ROOT_DIRECTORY)
+        parent = drive_client.create_folder(id, settings.ROOT_DIRECTORY)
 
         if zip:
             with zipfile.ZipFile(stream) as archive:
                 files = archive.filelist
                 for file in files:
                     image = io.BytesIO(archive.read(file))
-                    client.upload_basic(f"{filename}_{file.filename}", parent, image)
+                    drive_client.upload_basic(
+                        f"{filename}_{file.filename}", parent, image
+                    )
         else:
-            client.upload_basic(filename, parent, stream)
+            drive_client.upload_basic(filename, parent, stream)
 
     except HttpError as error:
         log.error(f"An error occurred: {error}")
@@ -73,10 +75,10 @@ async def delete_file(filename, response: Response):
     """
 
     try:
-        files = client.get_files(filename)
+        files = drive_client.get_files(filename)
         if files:
             for file in files:
-                client.delete_file(file["id"])
+                drive_client.delete_file(file["id"])
         else:
             response.status_code = status.HTTP_404_NOT_FOUND
 

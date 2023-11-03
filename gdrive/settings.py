@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", logging.getLevelName(logging.INFO))
-logging.basicConfig(level=LOG_LEVEL)
 
 SCOPES = [
     "https://www.googleapis.com/auth/analytics",

@@ -10,7 +10,7 @@ import fastapi
 from pydantic import BaseModel, Field
 from fastapi import BackgroundTasks, responses
 
-from gdrive import export_client, drive_client, settings, error
+from gdrive import export_client, drive_client, sheets_client, settings, error
 from gdrive.database import database, crud, models
 
 log = logging.getLogger(__name__)

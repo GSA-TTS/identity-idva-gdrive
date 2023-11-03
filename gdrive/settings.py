@@ -21,7 +21,6 @@ SCOPES = [
 ]
 
 SERVICE_ACCOUNT_FILE = "credentials.json"
-DATABASE_CONFIG_FILE = "db_config.json"
 
 ROOT_DIRECTORY = ""
 CODE_NAMES = None
@@ -36,8 +35,8 @@ ES_PORT = os.getenv("ES_PORT")
 QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
 QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
 
-DB_URI = None
-SCHEMA = "gdrive"
+DB_URI = os.getenv("IDVA_DB_CONN_STR")
+SCHEMA = "idva"
 
 try:
     vcap_services = os.getenv("VCAP_SERVICES")
@@ -56,10 +55,6 @@ try:
         with open(SERVICE_ACCOUNT_FILE) as file:
             log.info("Loading credentials from creds file")
             config = json.load(file)
-        if os.path.isfile(DATABASE_CONFIG_FILE):
-            with open(DATABASE_CONFIG_FILE) as file:
-                log.info("Loading DB credentials")
-                db_config = json.load(file)
 
     CREDENTIALS = config["credentials"]
     ANALYTICS_ROOT = config["analytics_root"]
@@ -68,10 +63,6 @@ try:
     ROOT_DIRECTORY = config["root_directory"]
     CODE_NAMES = config["code_names"]
     SHEETS_ID = config["sheets_id"]
-
-    # Database connections
-    if db_config is not None:
-        DB_URI = db_config["uri"]
 
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")

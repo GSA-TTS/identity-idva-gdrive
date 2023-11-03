@@ -86,7 +86,7 @@ async def survey_upload_response_task(request):
 
         if request.participant:
             participant = request.participant
-            drive_client.upload_participant(
+            sheets_client.upload_participant(
                 participant.first,
                 participant.last,
                 participant.email,

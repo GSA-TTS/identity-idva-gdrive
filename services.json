@@ -1,0 +1,11 @@
+{
+    "db": {
+        "name": "gdrivedb",
+        "service": "aws-rds",
+        "plan": {
+            "dev": "micro-psql",
+            "test": "micro-psql",
+            "prod": "micro-psql"
+        }
+    }
+}

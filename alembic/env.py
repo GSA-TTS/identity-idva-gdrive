@@ -4,6 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+import sqlalchemy
 
 from gdrive.database.models import Base
 from gdrive import settings
@@ -37,6 +38,7 @@ if not settings.DB_URI:
     exit()
 
 config.set_main_option("sqlalchemy.url", settings.DB_URI)
+config.set_main_option("version_table_schema", settings.SCHEMA)
 
 
 def run_migrations_offline() -> None:
@@ -70,10 +72,9 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+    connectable = sqlalchemy.create_engine(
+        settings.DB_URI,
+        connect_args={"options": "-csearch_path=%s" % (settings.SCHEMA)},
     )
 
     with connectable.connect() as connection:

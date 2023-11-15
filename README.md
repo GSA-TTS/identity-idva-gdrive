@@ -29,16 +29,19 @@ pre-commit install
 ```
 ### Database Setup & Usage
 
-- Install Postgres
+Gdrive utilizes a postgres database to write various persistent data points. (ex. writing raw completion data from the `survey-export` endpoint) If the user does not wish to make use of this feature, no action is required. A NoSQL in memory DB is created with SQL Alchemy. 
+
+However, if the user does wish to work on this DB locally, follow steps to [install PostgresDB](https://dev.to/sfpear/install-and-use-postgres-in-wsl-423d#:~:text=To%20install%20Postgres%20and%20run%20it%20in%20WSL%2C,installation%20and%20get%20the%20version%20number%3A%20psql%20--version). 
+
+Once installed, a schema needs to be created for IDVA. 
+
 ```sql
 create schema if not exists idva;
-alter role postgres set search_path = idva;
 ```
 Once the above SQL has been run on postgres, alembic can be used to build the DDL Dependencies.
 
-Alembic uses the same connection string as the gdrive module, loading the 
-value from `settings.DB_URI`. In case a different URI is needed, the URI alembic 
-uses can be configured manually in `alembic.ini`.
+Alembic uses the same connection string and schema as the gdrive module, loading the 
+values in `settings.py` from the enviorment variable `IDVA_DB_CONN_STR`. In case a different URI is needed, the URI alembic uses can be configured manually in `alembic.ini`.
 ```ini
 # Update Alembic connection string in Alembic.ini
 sqlalchemy.url = postgresql://postgres:{PASSWORD}@{URL}:{PORT}

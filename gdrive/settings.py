@@ -16,13 +16,18 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", logging.getLevelName(logging.INFO))
 logging.basicConfig(level=LOG_LEVEL)
 
 SCOPES = [
+    "https://www.googleapis.com/auth/analytics",
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/spreadsheets",
 ]
+
 SERVICE_ACCOUNT_FILE = "credentials.json"
 ROOT_DIRECTORY = ""
 CODE_NAMES = None
 CREDENTIALS = None
+ANALYTICS_ROOT = None
+ANALYTICS_PROPERTY_ID = None
+ANALYTICS_CREDENTIALS = None
 
 ES_HOST = os.getenv("ES_HOST")
 ES_PORT = os.getenv("ES_PORT")
@@ -45,6 +50,9 @@ try:
             log.info("Loading credentials from creds file")
             config = json.load(file)
     CREDENTIALS = config["credentials"]
+    ANALYTICS_ROOT = config["analytics_root"]
+    ANALYTICS_PROPERTY_ID = config["analytics_property_id"]
+    ANALYTICS_CREDENTIALS = config["analytics_credentials"]
     ROOT_DIRECTORY = config["root_directory"]
     CODE_NAMES = config["code_names"]
     SHEETS_ID = config["sheets_id"]

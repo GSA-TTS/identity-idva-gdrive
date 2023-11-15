@@ -101,6 +101,26 @@ Request body:
 }
 ```
 
+#### Product Analytics Bulk Upload
+Exports Google Analytics data gathered from the IDVA flow to Google Drive, as a google sheets object. Routine then builds pivot tables to enable user to read data easily. Default behaviour for the API `/analytics` writes data for the previous day.
+
+The ID of the Google Drive folder is configurable in `ANALYTICS_ROOT`. (`settings`)
+
+Optionally, the user can pass in a date range to be uploaded. The data is collated into a single document, and the same pivot tables are written on the collated data.
+
+`POST /analytics`
+```
+Query parameters: None
+```
+`POST /analytics/daterange`
+```JSON
+// Request body
+{
+  "startDate": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD"
+}
+```
+
 
 ### Deploying to Cloud.gov during development
 All deployments require having the correct Cloud.gov credentials in place. If

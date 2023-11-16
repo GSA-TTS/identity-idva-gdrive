@@ -67,3 +67,8 @@ try:
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")
     log.debug("Error: %s", str(err))
+
+
+if DB_URI is not None:
+    # Sqlalchemy requires 'postgresql' as the protocol
+    DB_URI = DB_URI.replace("postgres://", "postgresql://", 1)

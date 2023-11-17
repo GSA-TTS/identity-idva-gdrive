@@ -12,6 +12,7 @@ Make sure you have the following installed if you intend to build the project lo
 ### Development Setup
 To set up your environment, run the following commands (or the equivalent
 commands if not using a bash-like terminal):
+
 ```shell
 # Clone the project
 git clone https://github.com/GSA-TTS/identity-idva-gdrive
@@ -25,10 +26,35 @@ source .venv/bin/activate
 # Install dependencies and pre-commit hooks
 python -m pip install -r requirements-dev.txt
 pre-commit install
+```
+### Database Setup & Usage
 
-The project can be ran locally with:
+Gdrive utilizes a postgres database to write various persistent data points. (ex. writing raw completion data from the `survey-export` endpoint) If the user does not wish to make use of this feature, no action is required. A NoSQL in memory DB is created with SQL Alchemy. 
+
+However, if the user does wish to work on this DB locally, follow steps to [install PostgresDB](https://dev.to/sfpear/install-and-use-postgres-in-wsl-423d#:~:text=To%20install%20Postgres%20and%20run%20it%20in%20WSL%2C,installation%20and%20get%20the%20version%20number%3A%20psql%20--version). 
+
+Once installed, a schema needs to be created for IDVA. 
+
+```sql
+create schema if not exists idva;
+```
+Once the above SQL has been run on postgres, alembic can be used to build the DDL Dependencies.
+
+Alembic uses the same connection string and schema as the gdrive module, loading the 
+values in `settings.py` from the enviorment variable `IDVA_DB_CONN_STR`. In case a different URI is needed, the URI alembic uses can be configured manually in `alembic.ini`.
+```ini
+# Update Alembic connection string in Alembic.ini
+sqlalchemy.url = postgresql://postgres:{PASSWORD}@{URL}:{PORT}
+```
+Use alembic to build database entities, and app is ready.
 ```shell
-uvicorn gdrive.main:app
+# This step may be nessessary if doing a rebuild of the whole schema, 
+# clean install does not need to worry about this step. 
+$ alembic downgrade base
+# Updates the empty db schema with all of the DDL app dependencies
+$ alembic upgrade head
+#The project can be ran locally with:
+$ uvicorn gdrive.main:app
 ```
 
 ### Running the application

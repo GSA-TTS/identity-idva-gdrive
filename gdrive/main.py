@@ -1,14 +1,10 @@
 """
 GDrive Microservice FastAPI Web App.
 """
-import logging
-
 import fastapi
 import starlette_prometheus
 
-from . import api, export_api, settings, analytics_api
-
-logging.basicConfig(level=settings.LOG_LEVEL)
+from . import api, export_api, analytics_api, settings
 
 app = fastapi.FastAPI()
 

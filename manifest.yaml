@@ -10,6 +10,7 @@ applications:
     command: uvicorn gdrive.main:app --host 0.0.0.0 --port $PORT
     services:
       - gdrive
+      - tokendb
       - outbound-proxy
     env:
       ES_HOST: identity-idva-es-proxy-((ENVIRONMENT)).apps.internal

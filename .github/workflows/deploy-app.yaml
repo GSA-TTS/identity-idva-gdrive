@@ -30,7 +30,9 @@ jobs:
           cf-org: ${{ secrets.CF_ORG }}
 
       - name: Deploy application
-        run: cf push --vars-file vars.yaml --var ENVIRONMENT=${{ steps.cf-setup.outputs.target-environment }} --strategy rolling
+        run: | 
+          cf push --vars-file vars.yaml --var ENVIRONMENT=${{ steps.cf-setup.outputs.target-environment }} --strategy rolling
+          alembic upgrade head
 
       - name: Add network policies
         run: |

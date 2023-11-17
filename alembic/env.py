@@ -2,6 +2,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy import schema
 
 from alembic import context
 import sqlalchemy
@@ -76,6 +77,9 @@ def run_migrations_online() -> None:
         settings.DB_URI,
         connect_args={"options": "-csearch_path=%s" % (settings.SCHEMA)},
     )
+
+    if not connectable.dialect.has_schema(connectable, settings.SCHEMA):
+        connectable.execute(schema.CreateSchema(settings.SCHEMA))
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)

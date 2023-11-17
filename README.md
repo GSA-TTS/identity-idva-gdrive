@@ -33,11 +33,8 @@ Gdrive utilizes a postgres database to write various persistent data points. (ex
 
 However, if the user does wish to work on this DB locally, follow steps to [install PostgresDB](https://dev.to/sfpear/install-and-use-postgres-in-wsl-423d#:~:text=To%20install%20Postgres%20and%20run%20it%20in%20WSL%2C,installation%20and%20get%20the%20version%20number%3A%20psql%20--version). 
 
-Once installed, a schema needs to be created for IDVA. 
+> **_NOTE:_** Once installed, a schema needs to be created for IDVA. `env.py` in alembic handles this dynamically, using SqlAlchemy to check if the schema is present and creating if not. This is done before any migrations take place and should be safe to run on a fresh db install.
 
-```sql
-create schema if not exists idva;
-```
 Once the above SQL has been run on postgres, alembic can be used to build the DDL Dependencies.
 
 Alembic uses the same connection string and schema as the gdrive module, loading the 

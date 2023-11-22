@@ -28,11 +28,9 @@ def upgrade() -> None:
     op.add_column("response", sa.Column("survey_id", sa.String(), nullable=False))
     op.add_column("response", sa.Column("session_id", sa.String(), nullable=False))
     op.add_column("response", sa.Column("dist", sa.String(), nullable=False))
-    # Add foreign key to interaction
 
 
 def downgrade() -> None:
-    # Drop foreign key from interaction
     op.drop_column("response", "interaction_id")
     op.drop_column("response", "response_id")
     op.drop_column("response", "survey_id")

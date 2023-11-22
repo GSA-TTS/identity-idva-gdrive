@@ -9,7 +9,7 @@ from typing import Optional
 import fastapi
 from pydantic import BaseModel
 from fastapi import responses
-from gdrive import analytics_client, idva_flow_analytics
+from gdrive import analytics_client, idva_flow_analytics, error
 
 log = logging.getLogger(__name__)
 router = fastapi.APIRouter()
@@ -43,11 +43,14 @@ async def run_analytics_default(req: Optional[AnalyticsRequest] = None):
                 content="Failed (invalid date parameters): %s" % (err),
             )
 
-    run_analytics(start, end)
-    return responses.JSONResponse(
-        status_code=202,
-        content=message,
-    )
+    try:
+        run_analytics(start, end)
+    except Exception as err:
+        return responses.JSONResponse(
+            status_code=500, content="Report generation failed"
+        )
+
+    return responses.JSONResponse(status_code=202, content=message)
 
 
 @router.post("/analytics/list")
@@ -63,6 +66,7 @@ def run_analytics(start_date: datetime, end_date: datetime):
         idva_flow_analytics.create_report(start_date, end_date)
     except Exception as e:
         log.error(e)
+        raise error("Report generation failed")
 
 
 def list_accounts():

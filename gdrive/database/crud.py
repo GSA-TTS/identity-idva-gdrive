@@ -11,3 +11,12 @@ def create_participant(db_item: models.ParticipantModel):
     session.refresh(db_item)
     session.close()
     return db_item
+
+
+def create_response(db_item: models.ResponseModel):
+    session = database.SessionLocal()
+    session.add(db_item)
+    session.commit()
+    session.refresh(db_item)
+    session.close()
+    return db_item

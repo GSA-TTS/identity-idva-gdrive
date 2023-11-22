@@ -6,6 +6,26 @@ from sqlalchemy.ext import declarative
 Base = declarative.declarative_base()
 
 
+class ResponseModel(Base):
+    __tablename__ = "response"
+
+    interaction_id = sqla.Column(sqla.String, primary_key=True)
+    response_id = sqla.Column(sqla.String)
+    survey_id = sqla.Column(sqla.String)
+    session_id = sqla.Column(sqla.String)
+    dist = sqla.Column(sqla.String)
+
+    def as_list(self, index: str) -> list:
+        return [
+            index,
+            self.interaction_id,
+            self.response_id,
+            self.survey_id,
+            self.session_id,
+            self.dist,
+        ]
+
+
 class ParticipantModel(Base):
     __tablename__ = "participant"
 

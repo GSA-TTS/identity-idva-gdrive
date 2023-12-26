@@ -297,7 +297,7 @@ def twitter_x_pivot(sheets_id, names_to_id, col_dict):
 
 def linkedin_pivot(sheets_id, names_to_id, col_dict):
     sheets_client.update_cell_value(
-        sheets_id, SheetsEnum.REKREWT.value, "U5", "LINKEDIN"
+        sheets_id, SheetsEnum.REKREWT.value, "V5", "LINKEDIN"
     )  # Pivot table Label
     sheets_client.update_cell_value(
         sheets_id, SheetsEnum.REKREWT.value, "G1", "LINKEDIN"
@@ -315,7 +315,7 @@ def linkedin_pivot(sheets_id, names_to_id, col_dict):
         FormulaEnum.GET_PIVOT_DATA,
         params=[
             StringLiteral("SUM of eventCount"),
-            "U6",
+            "V6",
             StringLiteral("eventName"),
             StringLiteral("session_start"),
         ],
@@ -325,7 +325,7 @@ def linkedin_pivot(sheets_id, names_to_id, col_dict):
         FormulaEnum.GET_PIVOT_DATA,
         params=[
             StringLiteral("SUM of eventCount"),
-            "U6",
+            "V6",
             StringLiteral("eventName"),
             StringLiteral("first_visit"),
         ],

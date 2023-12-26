@@ -1,15 +1,33 @@
-import json
+from abc import ABC, abstractclassmethod
 
-from gdrive.pivot.enums import (
-    FilterTypeEnum,
+from gdrive.sheets.types import (
+    FormulaEnum,
     SortOrderEnum,
     SummarizeFunctionEnum,
     ValueLayoutEnum,
+    FilterTypeEnum,
+    AbstractScaffold,
 )
-from gdrive.pivot.scaffold import AbstractScaffold
 
 
-class PivotTableBuilder:
+class AbstractBuilder(ABC):
+    def render(self) -> str:
+        pass
+
+
+class FormulaBuilder(AbstractBuilder):
+    def __init__(self, op: FormulaEnum, params: []):
+        self.params = params
+        self.op = op
+
+    def __str__(self):
+        return "%s(%s)" % (self.op.value, ",".join([str(x) for x in self.params]))
+
+    def render(self) -> str:
+        return "=%s" % str(self)
+
+
+class PivotTableBuilder(AbstractBuilder):
     def __init__(self, source_sheet_id: int = 0, col_lookup=None) -> None:
         self.source_sheet_id = source_sheet_id
         self.columns = col_lookup
@@ -124,14 +142,8 @@ class PivotTableBuilder:
     ) -> None:
         self.__set_pivot_value("valueLayout", value_layout.value)
 
-    def as_dict(self) -> dict:
+    def render(self) -> dict:
         return self.__pivot_scaffold
-
-    def as_json(self) -> str:
-        return json.dumps(self.__pivot_scaffold)
-
-    def as_object(self) -> object:
-        return DefaultMunch.fromDict(self.__pivot_scaffold)
 
     def reset(self) -> None:
         self.__init__(self.source_sheet_id)

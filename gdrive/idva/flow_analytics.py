@@ -1,14 +1,20 @@
 import datetime
+from enum import Enum
 import pandas as pd
 import logging
 
 from gdrive import settings, sheets_client, drive_client, analytics_client
 from gdrive.idva.pivot_director import IDVAPivotDirector
+from gdrive.sheets.builders import FormulaBuilder
+from gdrive.sheets.types import FormulaEnum, Range, StringLiteral
 
 log = logging.getLogger(__name__)
 idva = IDVAPivotDirector()
 
-sources = ["facebook", "rt", "craigslist", "rd", "tx", "ln"]
+
+class SheetsEnum(str, Enum):
+    REKREWT = "Rekrewt Pivot Tables"
+    GSA = "GSA Use Pivot Table"
 
 
 def create_report(start_date: datetime, end_date: datetime):
@@ -18,7 +24,8 @@ def create_report(start_date: datetime, end_date: datetime):
 
     analytics_df = analytics_client.create_df_from_analytics_response(response)
     sheets_id = export(analytics_df, start_date, end_date)
-    create_pages_and_pivot_tables(analytics_df, sheets_id=sheets_id)
+    names_to_id = create_pages(sheets_id)
+    create_pivot_tables(analytics_df, names_to_id, sheets_id)
 
 
 def export(
@@ -54,7 +61,7 @@ def export(
     return sheets_id
 
 
-def create_pages_and_pivot_tables(df: pd.DataFrame, sheets_id: str):
+def create_pages(sheets_id: str) -> dict:
     """
     Add new pages and pivot tables.
 
@@ -64,94 +71,272 @@ def create_pages_and_pivot_tables(df: pd.DataFrame, sheets_id: str):
     Args:
         df (pandas.DataFrame): Tabular data in the spreadsheet
         sheets_id (str): Google Sheets object ID
+    Returns:
+        names_to_id (dict): A Dictionary mapping string sheet names to IDs
     """
-
-    page1 = "Rekrewt Pivot Table - First Visit"
-    page2 = "Rekrewt Pivot Table - Sessions"
-    page3 = "GSA Use Pivot Table"
-    page4 = "Conversions"
-
     new_sheet_name_to_id = sheets_client.add_new_pages(
-        [page1, page2, page3, page4], sheets_id
+        [SheetsEnum.REKREWT.value, SheetsEnum.GSA.value], sheets_id
     )
     log.info("Added %s pages to %s" % (len(new_sheet_name_to_id.keys()), sheets_id))
-    create_pivot_tables(
-        df, (page1, page2, page3, page4), new_sheet_name_to_id, sheets_id
-    )
+    return new_sheet_name_to_id
 
 
-def create_pivot_tables(
-    df: pd.DataFrame, page_names: (str, str, str), names_to_id: dict, sheets_id: str
-):
+def create_pivot_tables(df: pd.DataFrame, names_to_id: dict, sheets_id: str):
     # Make a dictionary mapping the name of the column to its index, useful for the pivot tables.
     col_dict = {}
     for idx, val in enumerate(df.iloc[0]):
         col_dict[val] = idx
 
-    create_event_pivots(sheets_id, names_to_id[page_names[0]], "first_visit", col_dict)
-    log.info(
-        "Added %s pivot tables to %s (%s)"
-        % (len(sources), page_names[0], names_to_id[page_names[0]])
+    facebook_pivot(sheets_id, names_to_id, col_dict)
+    craigslist_pivot(sheets_id, names_to_id, col_dict)
+    reddit_pivot(sheets_id, names_to_id, col_dict)
+    twitter_x_pivot(sheets_id, names_to_id, col_dict)
+    linkedin_pivot(sheets_id, names_to_id, col_dict)
+
+    sheets_client.add_pivot_tables(
+        sheets_id, names_to_id[SheetsEnum.GSA.value], idva.clicks(col_dict)
     )
 
-    create_event_pivots(
-        sheets_id, names_to_id[page_names[1]], "session_start", col_dict
-    )
-    log.info(
-        "Added %s pivot tables to %s (%s)"
-        % (len(sources), page_names[1], names_to_id[page_names[1]])
-    )
-
-    create_clicks_pt(sheets_id, names_to_id[page_names[2]], col_dict)
-    log.info(
-        "Added pivot table to %s (%s)" % (page_names[2], names_to_id[page_names[2]])
-    )
-
-    create_feedback_pt(sheets_id, names_to_id[page_names[3]], col_dict)
-    log.info(
-        "Added pivot table to %s (%s)" % (page_names[3], names_to_id[page_names[3]])
-    )
+    # Add formulas for some totals here
+    session_sum = FormulaBuilder(FormulaEnum.SUM, params=[Range("C2", "G2")])
+    first_visit_sum = FormulaBuilder(FormulaEnum.SUM, params=[Range("C3", "G3")])
 
     sheets_client.update_cell_value(
-        sheets_id, page_names[0], "A17", "Total First Visits"
-    )
+        sheets_id, SheetsEnum.REKREWT.value, "A2", "Sessions"
+    )  # Sessions for each source label
     sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "A3", "First Visits"
+    )  # First visits for each source label
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "B1", "Total"
+    )  # Total of each event label
+
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "B2", session_sum.render()
+    )  # total value
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "B3", first_visit_sum.render()
+    )  # total value
+
+
+def facebook_pivot(sheets_id, names_to_id, col_dict):
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "A5", "FACEBOOK"
+    )  # Pivot table Label
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "C1", "FACEBOOK"
+    )  # Totals label
+
+    sheets_client.add_pivot_tables(
         sheets_id,
-        page_names[0],
-        "A18",
-        '=GETPIVOTDATA("SUM of eventCount",A1, "eventName", "first_visit") + GETPIVOTDATA("SUM of eventCount",F1, "eventName", "first_visit") + GETPIVOTDATA("SUM of eventCount",K1, "eventName", "first_visit") + GETPIVOTDATA("SUM of eventCount",P1, "eventName", "first_visit") + GETPIVOTDATA("SUM of eventCount", U1, "eventName", "first_visit") + GETPIVOTDATA("SUM of eventCount", Z1, "eventName", "first_visit")',
+        names_to_id[SheetsEnum.REKREWT.value],
+        idva.facebook(col_dict),
+        row_idx=5,
+        col_idx=0,
     )
-    log.info("Wrote totals to %s" % (page_names[0]))
 
-    sheets_client.update_cell_value(sheets_id, page_names[1], "A17", "Total Sessions")
+    facebook_sessions = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "A6",
+            StringLiteral("eventName"),
+            StringLiteral("session_start"),
+        ],
+    )
+
+    facebook_visit = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "A6",
+            StringLiteral("eventName"),
+            StringLiteral("first_visit"),
+        ],
+    )
+
     sheets_client.update_cell_value(
-        sheets_id,
-        page_names[1],
-        "A18",
-        '=GETPIVOTDATA("SUM of eventCount",A1, "eventName", "session_start") + GETPIVOTDATA("SUM of eventCount",F1, "eventName", "session_start") + GETPIVOTDATA("SUM of eventCount",K1, "eventName", "session_start") + GETPIVOTDATA("SUM of eventCount",P1, "eventName", "session_start") + GETPIVOTDATA("SUM of eventCount", U1, "eventName", "session_start") + GETPIVOTDATA("SUM of eventCount", Z1, "eventName", "session_start")',
+        sheets_id, SheetsEnum.REKREWT.value, "C2", facebook_sessions.render()
     )
-    log.info("Wrote totals to %s" % (page_names[1]))
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "C3", facebook_visit.render()
+    )
 
 
-def create_event_pivots(sheets_id, page_id, event, col_dict):
-    for idx, source in enumerate(sources):
-        pivot = None
-        if source in ["rd", "tx", "ln"]:
-            pivot = idva.event_by_medium_counter(col_dict, event, source)
-        else:
-            pivot = idva.event_by_source_counter(col_dict, event, source)
+def craigslist_pivot(sheets_id, names_to_id, col_dict):
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "G5", "CRAIGSLIST"
+    )  # Pivot table Label
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "D1", "CRAIGSLIST"
+    )  # Totals label
 
-        sheets_client.add_pivot_tables(
-            sheets_id, page_id, pivot, row_idx=0, col_idx=(idx * 5)
-        )
+    sheets_client.add_pivot_tables(
+        sheets_id,
+        names_to_id[SheetsEnum.REKREWT.value],
+        idva.craigslist(col_dict),
+        row_idx=5,
+        col_idx=6,
+    )
+
+    craigslist_sessions = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "G6",
+            StringLiteral("eventName"),
+            StringLiteral("session_start"),
+        ],
+    )
+
+    craigslist_visit = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "G6",
+            StringLiteral("eventName"),
+            StringLiteral("first_visit"),
+        ],
+    )
+
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "D2", craigslist_sessions.render()
+    )
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "D3", craigslist_visit.render()
+    )
 
 
-def create_clicks_pt(sheets_id, page_id, col_dict):
-    sheets_client.add_pivot_tables(sheets_id, page_id, idva.clicks(col_dict))
+def reddit_pivot(sheets_id, names_to_id, col_dict):
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "L5", "REDDIT"
+    )  # Pivot table Label
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "E1", "REDDIT"
+    )  # Totals label
+
+    sheets_client.add_pivot_tables(
+        sheets_id,
+        names_to_id[SheetsEnum.REKREWT.value],
+        idva.reddit(col_dict),
+        row_idx=5,
+        col_idx=11,
+    )
+
+    reddit_sessions = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "L6",
+            StringLiteral("eventName"),
+            StringLiteral("session_start"),
+        ],
+    )
+
+    reddit_visit = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "L6",
+            StringLiteral("eventName"),
+            StringLiteral("first_visit"),
+        ],
+    )
+
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "E2", reddit_sessions.render()
+    )
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "E3", reddit_visit.render()
+    )
 
 
-def create_feedback_pt(sheets_id, page_id, col_dict):
-    sheets_client.add_pivot_tables(sheets_id, page_id, idva.feedback(col_dict))
+def twitter_x_pivot(sheets_id, names_to_id, col_dict):
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "Q5", "TWITTER/X"
+    )  # Pivot table Label
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "F1", "TWITTER/X"
+    )  # Totals label
+
+    sheets_client.add_pivot_tables(
+        sheets_id,
+        names_to_id[SheetsEnum.REKREWT.value],
+        idva.twitter_x(col_dict),
+        row_idx=5,
+        col_idx=16,
+    )
+
+    twitter_x_sessions = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "Q6",
+            StringLiteral("eventName"),
+            StringLiteral("session_start"),
+        ],
+    )
+
+    twitter_x_visit = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "Q6",
+            StringLiteral("eventName"),
+            StringLiteral("first_visit"),
+        ],
+    )
+
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "F2", twitter_x_sessions.render()
+    )
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "F3", twitter_x_visit.render()
+    )
+
+
+def linkedin_pivot(sheets_id, names_to_id, col_dict):
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "U5", "LINKEDIN"
+    )  # Pivot table Label
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "G1", "LINKEDIN"
+    )  # Totals label
+
+    sheets_client.add_pivot_tables(
+        sheets_id,
+        names_to_id[SheetsEnum.REKREWT.value],
+        idva.linkedin(col_dict),
+        row_idx=5,
+        col_idx=21,
+    )
+
+    linkedin_sessions = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "U6",
+            StringLiteral("eventName"),
+            StringLiteral("session_start"),
+        ],
+    )
+
+    linkedin_visit = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "U6",
+            StringLiteral("eventName"),
+            StringLiteral("first_visit"),
+        ],
+    )
+
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "G2", linkedin_sessions.render()
+    )
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "G3", linkedin_visit.render()
+    )
 
 
 def generate_filename(date: datetime, end_date: datetime = None):

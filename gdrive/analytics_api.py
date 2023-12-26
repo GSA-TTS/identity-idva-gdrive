@@ -11,8 +11,7 @@ from pydantic import BaseModel
 from fastapi import responses
 from gdrive import analytics_client
 from gdrive.idva import flow_analytics
-from gdrive.idva.pivot_director import IDVAPivotDirector
-from gdrive import analytics_client, idva_flow_analytics, error
+from gdrive import analytics_client, error
 
 log = logging.getLogger(__name__)
 router = fastapi.APIRouter()
@@ -62,11 +61,6 @@ async def list_accounts():
     return responses.JSONResponse(
         status_code=202, content="List request is being processed."
     )
-
-
-@router.post("/analytics/pivot")
-async def test_pivot_builder():
-    return responses.JSONResponse(status_code=202, content=IDVAPivotDirector().test())
 
 
 def run_analytics(start_date: datetime, end_date: datetime):

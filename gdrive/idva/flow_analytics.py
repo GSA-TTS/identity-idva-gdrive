@@ -23,6 +23,8 @@ def create_report(start_date: datetime, end_date: datetime):
     )
 
     analytics_df = analytics_client.create_df_from_analytics_response(response)
+    analytics_df = preprocess_report(analytics_df)
+
     sheets_id = export(analytics_df, start_date, end_date)
     names_to_id = create_pages(sheets_id)
     create_pivot_tables(analytics_df, names_to_id, sheets_id)
@@ -59,6 +61,45 @@ def export(
         "Successfully created %s (%s)" % (filename_str, result.get("spreadsheetId"))
     )
     return sheets_id
+
+
+def preprocess_report(df: pd.DataFrame) -> pd.DataFrame:
+    tracked_events = ["first_visit", "session_start"]
+    tracked_sources = [
+        "m.facebook.com",
+        "fb.com",
+        "([a-zA-Z].+)craigslist.org",
+        "reddit.com",
+        "redd.it",
+        "t.co",
+        "x.com",
+        "twitter",
+        "linked.com",
+        "lnkd.in",
+    ]
+    tracked_mediums = ["fb", "cl", "rd", "tx", "ln"]
+
+    for event in tracked_events:
+        tracked_df = df[df[0] == event]
+        for source in tracked_sources:
+            if tracked_df[tracked_df[3].str.match(source)].empty:
+                add_source_placeholder_row(df, event, source)
+
+        for medium in tracked_mediums:
+            if tracked_df[tracked_df[2].str.match(medium)].empty:
+                add_medium_placeholder_row(df, event, medium)
+
+    return df
+
+
+def add_source_placeholder_row(df: pd.DataFrame, event: str, source: str) -> None:
+    logging.info(f"Adding placeholder {event} for {source}")
+    df.loc[len(df.index)] = [event, "---", "---", source, "---", "---", 0, 0, 0, 0, 0]
+
+
+def add_medium_placeholder_row(df: pd.DataFrame, event: str, medium: str) -> None:
+    logging.info(f"Adding placeholder {event} for {medium}")
+    df.loc[len(df.index)] = [event, "---", medium, "---", "---", "---", 0, 0, 0, 0, 0]
 
 
 def create_pages(sheets_id: str) -> dict:

@@ -138,7 +138,7 @@ class FindModel(BaseModel):
     Request body format for the `/find` endpoint
     """
 
-    responseId: str
+    responseId: str | list[str]
     field: str
     values: list[str] = Field(..., min_items=1)
     result_field: str | None = None
@@ -148,5 +148,8 @@ class FindModel(BaseModel):
 async def find(find: FindModel):
     # for given responseid, find all occurences of
     result = find.result_field if find.result_field is not None else find.field
-    export_data = export_client.find(find.responseId, find.field, find.values, result)
+    responseId = (
+        find.responseId if isinstance(find.responseId, list) else [find.responseId]
+    )
+    export_data = export_client.find(responseId, find.field, find.values, result)
     return export_data

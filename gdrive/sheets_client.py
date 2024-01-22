@@ -118,13 +118,19 @@ def add_pivot_tables(
     return response
 
 
-def add_new_pages(page_names: [str], sheets_id: str):
+def add_new_pages(
+    page_names: [str], sheets_id: str, row_count: int = 1000, column_count: int = 26
+):
     new_sheets_reqs = []
     for label in page_names:
         req = {
             "addSheet": {
                 "properties": {
                     "title": label,
+                    "gridProperties": {
+                        "rowCount": row_count,
+                        "columnCount": column_count,
+                    },
                 }
             }
         }

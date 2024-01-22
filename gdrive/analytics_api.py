@@ -9,9 +9,8 @@ from typing import Optional
 import fastapi
 from pydantic import BaseModel
 from fastapi import responses
-from gdrive import analytics_client
-from gdrive.idva import flow_analytics
 from gdrive import analytics_client, error
+from gdrive.idva import flow_analytics
 
 log = logging.getLogger(__name__)
 router = fastapi.APIRouter()

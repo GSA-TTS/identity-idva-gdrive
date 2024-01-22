@@ -2,26 +2,59 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 
+"""
+This types module provides intellisense and strong(er) typing 
+when using the Pivot and Formula builder interfaces. If a function is 
+needed and the below enum do not support it, please add it to keep this 
+module up to date and useful.     
+"""
+
+
 class FilterTypeEnum(str, Enum):
+    """
+    FilterType provides filter function names for use with the Pivot and Formula
+    builders
+    """
+
     TEXT_CONTAINS = "TEXT_CONTAINS"
     TEXT_EQUALS = "TEXT_EQ"
     CUSTOM = "CUSTOM_FORMULA"
 
 
 class SortOrderEnum(str, Enum):
+    """
+    SortOrderEnum provides sort order names for use with the Pivot and Formula
+    builders
+    """
+
     ASCENDING = "ASCENDING"
     DESCENDING = "DESCENDING"
 
 
 class SummarizeFunctionEnum(str, Enum):
+    """
+    Summarize provides summary functions for use with the
+    Pivot and Formula builders
+    """
+
     SUM = "SUM"
 
 
 class ValueLayoutEnum(str, Enum):
+    """
+    ValueLayout provides value layout names for use with the Pivot and Formula
+    builders
+    """
+
     HORIZONTAL = "HORIZONTAL"
 
 
 class FormulaEnum(str, Enum):
+    """
+    FormulaEnum provides formula names for use with the Pivot and Formula
+    builders
+    """
+
     NOOP = ""
     OR = "OR"
     SUM = "sum"
@@ -30,6 +63,14 @@ class FormulaEnum(str, Enum):
 
 
 class StringLiteral:
+    """
+    StringLiteral allows string values to be render as literal strings in the resulting
+    Function or Pivot scaffold. i.e. "Hello world!" is a string literal.
+
+    Use string literals where the use of a token (eventName) is not desired in the
+    Function or Pivot Scaffold
+    """
+
     def __init__(self, value) -> None:
         self.value = value
 
@@ -38,6 +79,11 @@ class StringLiteral:
 
 
 class Range:
+    """
+    Range provides a scaffold for a range string between two string
+    values. (i.e. A2:G5)
+    """
+
     def __init__(self, a, b) -> None:
         self.a = a
         self.b = b

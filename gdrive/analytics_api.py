@@ -9,7 +9,8 @@ from typing import Optional
 import fastapi
 from pydantic import BaseModel
 from fastapi import responses
-from gdrive import analytics_client, idva_flow_analytics, error
+from gdrive import analytics_client, error
+from gdrive.idva import flow_analytics
 
 log = logging.getLogger(__name__)
 router = fastapi.APIRouter()
@@ -63,9 +64,9 @@ async def list_accounts():
 
 def run_analytics(start_date: datetime, end_date: datetime):
     try:
-        idva_flow_analytics.create_report(start_date, end_date)
+        flow_analytics.create_report(start_date, end_date)
     except Exception as e:
-        log.error(e)
+        log.exception(e)
         raise error("Report generation failed")
 
 

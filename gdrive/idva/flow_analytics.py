@@ -392,7 +392,7 @@ def linked_pivot(sheets_id, names_to_id, col_dict):
     sheets_client.add_pivot_tables(
         sheets_id,
         names_to_id[SheetsEnum.REKREWT.value],
-        idva.linkedin(col_dict),
+        idva.linked(col_dict),
         row_idx=5,
         col_idx=26,
     )

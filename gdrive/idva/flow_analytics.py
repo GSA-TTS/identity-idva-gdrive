@@ -116,7 +116,7 @@ def create_pages(sheets_id: str) -> dict:
         names_to_id (dict): A Dictionary mapping string sheet names to IDs
     """
     new_sheet_name_to_id = sheets_client.add_new_pages(
-        [SheetsEnum.REKREWT.value, SheetsEnum.GSA.value], sheets_id
+        [SheetsEnum.REKREWT.value, SheetsEnum.GSA.value], sheets_id, column_count=30
     )
     log.info("Added %s pages to %s" % (len(new_sheet_name_to_id.keys()), sheets_id))
     return new_sheet_name_to_id
@@ -133,6 +133,7 @@ def create_pivot_tables(df: pd.DataFrame, names_to_id: dict, sheets_id: str):
     reddit_pivot(sheets_id, names_to_id, col_dict)
     twitter_x_pivot(sheets_id, names_to_id, col_dict)
     linkedin_pivot(sheets_id, names_to_id, col_dict)
+    linked_pivot(sheets_id, names_to_id, col_dict)
 
     sheets_client.add_pivot_tables(
         sheets_id, names_to_id[SheetsEnum.GSA.value], idva.clicks(col_dict)
@@ -377,6 +378,50 @@ def linkedin_pivot(sheets_id, names_to_id, col_dict):
     )
     sheets_client.update_cell_value(
         sheets_id, SheetsEnum.REKREWT.value, "G3", linkedin_visit.render()
+    )
+
+
+def linked_pivot(sheets_id, names_to_id, col_dict):
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "AA5", "LINKED.COM"
+    )  # Pivot table Label
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "H1", "LINKED.COM"
+    )  # Totals label
+
+    sheets_client.add_pivot_tables(
+        sheets_id,
+        names_to_id[SheetsEnum.REKREWT.value],
+        idva.linked(col_dict),
+        row_idx=5,
+        col_idx=26,
+    )
+
+    linkedin_sessions = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "AA6",
+            StringLiteral("eventName"),
+            StringLiteral("session_start"),
+        ],
+    )
+
+    linkedin_visit = FormulaBuilder(
+        FormulaEnum.GET_PIVOT_DATA,
+        params=[
+            StringLiteral("SUM of eventCount"),
+            "AA6",
+            StringLiteral("eventName"),
+            StringLiteral("first_visit"),
+        ],
+    )
+
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "H2", linkedin_sessions.render()
+    )
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "H3", linkedin_visit.render()
     )
 
 

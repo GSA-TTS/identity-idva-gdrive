@@ -272,3 +272,51 @@ class IDVAPivotDirector:
         )
 
         return builder.render()
+
+    def linked(self, col_dict: dict) -> dict:
+        builder = PivotTableBuilder(0, col_dict)
+        builder.add_row("eventName", SortOrderEnum.ASCENDING, show_totals=False)
+        builder.add_row("firstUserMedium", SortOrderEnum.ASCENDING)
+        builder.add_row("firstUserSource", SortOrderEnum.ASCENDING)
+        builder.add_value("eventCount", SummarizeFunctionEnum.SUM)
+
+        # =OR(regexmatch(firstUserSource,"linked.com"))
+        linked = FormulaBuilder(
+            FormulaEnum.OR,
+            [
+                FormulaBuilder(
+                    FormulaEnum.REGEX_MATCH,
+                    ["firstUserSource", StringLiteral("linked.com")],
+                ),
+                FormulaBuilder(
+                    FormulaEnum.REGEX_MATCH,
+                    ["firstUserMedium", StringLiteral("linked.com")],
+                ),
+            ],
+        )
+
+        sessions = FormulaBuilder(
+            FormulaEnum.OR,
+            [
+                FormulaBuilder(
+                    FormulaEnum.REGEX_MATCH,
+                    ["eventName", StringLiteral("session_start")],
+                ),
+                FormulaBuilder(
+                    FormulaEnum.REGEX_MATCH, ["eventName", StringLiteral("first_visit")]
+                ),
+            ],
+        )
+
+        builder.add_filter(
+            "firstUserSource",
+            FilterTypeEnum.CUSTOM,
+            values=[UserEnteredValue(linked.render())],
+        )
+        builder.add_filter(
+            "eventName",
+            FilterTypeEnum.CUSTOM,
+            values=[UserEnteredValue(sessions.render())],
+        )
+
+        return builder.render()

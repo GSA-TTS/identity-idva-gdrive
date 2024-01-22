@@ -272,7 +272,9 @@ def find(responseId, field, values, result):
         hosts=[{"host": settings.ES_HOST, "port": settings.ES_PORT}], timeout=300
     )
 
-    all_interactionIds = get_all_InteractionIds(responseId)
+    all_interactionIds = []
+    for resid in responseId:
+        all_interactionIds.extend(get_all_InteractionIds(resid))
 
     if len(all_interactionIds) == 0:
         return {"found": []}
@@ -306,7 +308,7 @@ def find(responseId, field, values, result):
                 ]
             }
         },
-        "_source": [result],
+        "_source": ["interactionId", result],
     }
 
     found_result = es.search(body=json.dumps(query_found), index="_all")

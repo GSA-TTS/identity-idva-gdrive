@@ -21,7 +21,10 @@ log = logging.getLogger(__name__)
 creds = service_account.Credentials.from_service_account_info(
     settings.ANALYTICS_CREDENTIALS
 )
+
 API_DATE_FORMAT = "%Y-%m-%d"
+
+TRANSPORT = "rest"
 
 """
 Client for the Google Analytics (GA4) API
@@ -67,7 +70,9 @@ def download(
         ],
     )
 
-    return BetaAnalyticsDataClient(credentials=creds).run_report(request)
+    return BetaAnalyticsDataClient(credentials=creds, transport=TRANSPORT).run_report(
+        request
+    )
 
 
 def list():
@@ -75,7 +80,7 @@ def list():
     List the available properties the user has access to. Can be run to
     verify setup of the enviornment is correct.
     """
-    client = AnalyticsAdminServiceClient(credentials=creds)
+    client = AnalyticsAdminServiceClient(credentials=creds, transport=TRANSPORT)
     return client.list_accounts()
 
 

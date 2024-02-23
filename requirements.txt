@@ -2,7 +2,7 @@ fastapi==0.109.0
 uvicorn==0.26.0
 starlette-prometheus==0.9.0
 google-analytics-admin==0.22.2
-google-analytics-data==0.18.2
+google-analytics-data==0.18.6
 google-api-core==2.15.0
 google-api-python-client==2.114.0
 google-auth==2.26.2

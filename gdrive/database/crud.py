@@ -1,10 +1,7 @@
-import sqlalchemy
-from sqlalchemy import orm
-
-from gdrive.database import database, models
+from gdrive.database import database
 
 
-def create_participant(db_item: models.ParticipantModel):
+def create_row(db_item):
     session = database.SessionLocal()
     session.add(db_item)
     session.commit()

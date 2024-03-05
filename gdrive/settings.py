@@ -52,6 +52,7 @@ try:
             if service["name"] == "gdrive":
                 log.info("Loading credentials from env var")
                 config = service["credentials"]
+
                 break
     else:
         with open(SERVICE_ACCOUNT_FILE) as file:

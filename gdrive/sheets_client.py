@@ -229,7 +229,7 @@ def upload_participant(
             .values()
             .append(
                 spreadsheetId=settings.SHEETS_ID,
-                range="Sheet1!A1",
+                range=f"{settings.RAW_COMPLETIONS_SHEET_NAME}!A1",
                 valueInputOption="RAW",
                 body=body,
             )

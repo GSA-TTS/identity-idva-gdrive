@@ -78,11 +78,10 @@ async def survey_upload_response_task(request):
 
         log.info(f"{request.responseId} response found, beginning export.")
 
-        # DELETE?
-        # if response["status"] != "Complete":
-        #     raise error.ExportError(
-        #         f"Cannot upload incomplete survery response to raw completions spreadsheet: {request.responseId}"
-        #     )
+        if response["status"] != "Complete":
+            log.warn(
+                f"Incomplete survery response to raw completions spreadsheet: {request.responseId}"
+            )
 
         # By the time we get here, we can count on the response containing the demographic data
         # as it is included in the Completed flow responses. Responses without complete status
@@ -109,7 +108,9 @@ async def survey_upload_response_task(request):
             )
 
             if upload_result:
-                log.info(f"Uploaded {request.responseId} to completions spreadsheet")
+                log.info(
+                    f"Uploaded response: {request.responseId} to completions spreadsheet"
+                )
 
             crud.create_participant(
                 models.ParticipantModel(
@@ -133,15 +134,17 @@ async def survey_upload_response_task(request):
         # call function that queries ES for all analytics entries (flow interactionId) with responseId
         interactionIds = export_client.export_response(request.responseId, response)
         log.info(
-            f"Elastic Search returned {len(interactionIds)} interaction ids for this response"
+            f"Elastic Search returned {len(interactionIds)} interaction ids for response: {request.responseId}"
         )
 
         # export list of interactionIds to gdrive
         for id in interactionIds:
             await upload_file(id)
-            log.info(f"Exported {id} to gdrive")
+            log.info(
+                f"Exported response: {request.responseId} interaction: {id} to gdrive"
+            )
     except error.ExportError as e:
-        log.error(e.args)
+        log.error(f"Response: {request.responseId} encountered an error: {e.args}")
 
 
 class FindModel(BaseModel):

@@ -107,9 +107,10 @@ async def survey_upload_response_task(request):
                 survey_resp["skin_tone"],
             )
 
+            result_sheet_id = upload_result["spreadsheetId"]
             if upload_result:
                 log.info(
-                    f"Uploaded response: {request.responseId} to completions spreadsheet"
+                    f"Uploaded response: {request.responseId} to completions spreadsheet {result_sheet_id}"
                 )
 
             crud.create_participant(

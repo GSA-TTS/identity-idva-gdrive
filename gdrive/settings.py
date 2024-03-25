@@ -2,6 +2,7 @@
 Configuration for the gdrive microservice settings.
 Context is switched based on if the app is in debug mode.
 """
+
 import json
 import logging
 import os
@@ -36,6 +37,8 @@ ES_PORT = os.getenv("ES_PORT")
 QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
 QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
 
+RAW_COMPLETIONS_SHEET_NAME = os.getenv("GDRIVE_RAW_COMPLETIONS_SHEET_NAME", "Sheet1")
+
 DB_URI = os.getenv("IDVA_DB_CONN_STR")
 SCHEMA = "idva"
 
@@ -52,6 +55,7 @@ try:
             if service["name"] == "gdrive":
                 log.info("Loading credentials from env var")
                 config = service["credentials"]
+
                 break
     else:
         with open(SERVICE_ACCOUNT_FILE) as file:

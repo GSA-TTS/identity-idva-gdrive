@@ -5,6 +5,7 @@ gdrive rest api
 import io
 import json
 import logging
+import sys
 
 import fastapi
 from pydantic import BaseModel, Field
@@ -20,12 +21,14 @@ router = fastapi.APIRouter()
 
 @router.post("/export")
 async def upload_file(interactionId):
+    log.info(f"Export interaction {interactionId}")
     export_data = export_client.export(interactionId)
     export_bytes = io.BytesIO(
         export_client.codename(json.dumps(export_data, indent=2)).encode()
     )
     parent = drive_client.create_folder(interactionId, settings.ROOT_DIRECTORY)
     drive_client.upload_basic("analytics.json", parent, export_bytes)
+    log.info(f"Uploading {sys.getsizeof(export_bytes)} bytes to drive folder {parent}")
 
 
 class ParticipantModel(BaseModel):
@@ -67,16 +70,17 @@ async def survey_upload_response_task(request):
     """
     Background task that handles qualtrics response fetching and exporting
     """
+    log.info(f"Gathering response {request.responseId}")
     try:
         response = export_client.get_qualtrics_response(
             request.surveyId, request.responseId
         )
 
-        log.info("Response found, beginning export.")
+        log.info(f"{request.responseId} response found, beginning export.")
 
         if response["status"] != "Complete":
-            raise error.ExportError(
-                f"Cannot upload incomplete survery response to raw completions spreadsheet: {request.responseId}"
+            log.warn(
+                f"Incomplete survery response to raw completions spreadsheet: {request.responseId}"
             )
 
         # By the time we get here, we can count on the response containing the demographic data
@@ -86,7 +90,7 @@ async def survey_upload_response_task(request):
 
         if request.participant:
             participant = request.participant
-            sheets_client.upload_participant(
+            upload_result = sheets_client.upload_participant(
                 participant.first,
                 participant.last,
                 participant.email,
@@ -102,6 +106,12 @@ async def survey_upload_response_task(request):
                 survey_resp["income"],
                 survey_resp["skin_tone"],
             )
+
+            result_sheet_id = upload_result["spreadsheetId"]
+            if upload_result:
+                log.info(
+                    f"Uploaded response: {request.responseId} to completions spreadsheet {result_sheet_id}"
+                )
 
             crud.create_participant(
                 models.ParticipantModel(
@@ -120,17 +130,22 @@ async def survey_upload_response_task(request):
                     skin_tone=survey_resp["skin_tone"],
                 )
             )
+            log.info(f"Wrote {request.responseId} to database")
 
         # call function that queries ES for all analytics entries (flow interactionId) with responseId
         interactionIds = export_client.export_response(request.responseId, response)
-
-        log.info("Analytics updated, beginning gdrive export.")
+        log.info(
+            f"Elastic Search returned {len(interactionIds)} interaction ids for response: {request.responseId}"
+        )
 
         # export list of interactionIds to gdrive
         for id in interactionIds:
             await upload_file(id)
+            log.info(
+                f"Exported response: {request.responseId} interaction: {id} to gdrive"
+            )
     except error.ExportError as e:
-        log.error(e.args)
+        log.error(f"Response: {request.responseId} encountered an error: {e.args}")
 
 
 class FindModel(BaseModel):

@@ -1,6 +1,7 @@
 """
 DB Connection for Gdrive
 """
+
 import logging
 import sqlalchemy
 from sqlalchemy import orm
@@ -17,6 +18,8 @@ if settings.DB_URI:
         settings.DB_URI,
         connect_args={"options": "-csearch_path=%s" % (settings.SCHEMA)},
     )
+
+
 else:
     log.info("No database configuration found. Creating in memory DB.")
     engine = sqlalchemy.create_engine("sqlite+pysqlite:///:memory:")

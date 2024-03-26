@@ -1,7 +1,0 @@
-version: 2
-updates:
-  - package-ecosystem: "pip"
-    directory: "/"
-    ignore:
-      # ORM Integration breaks on 2.x versions
-      - dependency-name: "sqlalchemy"

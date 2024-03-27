@@ -11,6 +11,6 @@ google-auth-oauthlib==1.2.0
 googleapis-common-protos==1.63.0
 opensearch-py==2.4.2
 pandas==2.2.1
-sqlalchemy==1.4.*
+sqlalchemy==2.0.*
 psycopg2==2.9.9
 alembic==1.13.1

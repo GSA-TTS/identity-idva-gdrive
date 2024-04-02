@@ -2,11 +2,10 @@ import io
 import logging
 import json
 import mimetypes
-import pprint
 from typing import List
 
 from google.oauth2 import service_account
-from googleapiclient.discovery import build, mimetypes
+from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
 from gdrive import settings, error
@@ -18,8 +17,6 @@ creds = service_account.Credentials.from_service_account_info(
 )
 
 service = build("drive", "v3", credentials=creds)
-
-DIRECTORY_MIME_TYPE = "application/vnd.google-apps.folder"
 
 
 def init():
@@ -230,5 +227,5 @@ def delete_file(id: str) -> None:
     service.files().delete(fileId=id, supportsAllDrives=True).execute()
 
 
-def export_to_json(id: str) -> str:
-    return json.loads(service.files().get_media(fileId=id).execute())
+def export(id: str) -> any:
+    return service.files().get_media(fileId=id).execute()

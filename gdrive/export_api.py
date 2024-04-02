@@ -156,44 +156,39 @@ async def find(find: FindModel):
 
 
 # ------------------------------- Archive API --------------------------------------
-
-
 class InteractionModel(BaseModel):
     interactionId: str
     driveId: str
 
 
-@router.post("/export/vendor-response-list")
-async def get_vendor_responses(request: InteractionModel):
+@router.post("/export/interaction-files")
+async def get_files_by_id(request: InteractionModel):
     """
     Returns a list of Google Drive object IDs that contain the
     vendor responses for this particular interaction
     """
     interaction_folders = drive_client.get_files_by_drive_id(
-        filename=request.interactionId, drive_id=request.driveId
+        filename=request.interactionId, drive_id=settings.ROOT_DIRECTORY
     )
+
     vendor_file_ids = []
     for dir in interaction_folders:
         files = drive_client.get_files_in_folder(id=dir["id"])
         for file in files:
-            if file["mimeType"] == "application/json" and (
-                "analytics" not in file["name"]
-            ):
-                vendor_file_ids.append(file["id"])
+            vendor_file_ids.append(file)
 
-    return responses.JSONResponse(status_code=202, content=vendor_file_ids)
+    return responses.JSONResponse(
+        status_code=202,
+        content={"interaction": request.interactionId, "data": vendor_file_ids},
+    )
 
 
-class JsonResourceModel(BaseModel):
+class ResourceModel(BaseModel):
     resourceId: str
 
 
 @router.post("/export/resource")
-async def export_resource(request: JsonResourceModel):
-    try:
-        result = drive_client.export_to_json(request.resourceId)
-    except UnicodeDecodeError as e:
-        return responses.JSONResponse(
-            status_code=400, content="Resource could not be JSON encoded"
-        )
-    return responses.JSONResponse(status_code=202, content=result)
+async def export_resource(request: ResourceModel):
+    return responses.Response(
+        status_code=202, content=drive_client.export(request.resourceId)
+    )

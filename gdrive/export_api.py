@@ -168,3 +168,42 @@ async def find(find: FindModel):
     )
     export_data = export_client.find(responseId, find.field, find.values, result)
     return export_data
+
+
+# ------------------------------- Archive API --------------------------------------
+class InteractionModel(BaseModel):
+    interactionId: str
+    driveId: str
+
+
+@router.post("/export/interaction-files")
+async def get_files_by_id(request: InteractionModel):
+    """
+    Returns a list of Google Drive object IDs that contain the
+    vendor responses for this particular interaction
+    """
+    interaction_folders = drive_client.get_files_by_drive_id(
+        filename=request.interactionId, drive_id=settings.ROOT_DIRECTORY
+    )
+
+    vendor_file_ids = []
+    for dir in interaction_folders:
+        files = drive_client.get_files_in_folder(id=dir["id"])
+        for file in files:
+            vendor_file_ids.append(file)
+
+    return responses.JSONResponse(
+        status_code=202,
+        content={"interaction": request.interactionId, "data": vendor_file_ids},
+    )
+
+
+class ResourceModel(BaseModel):
+    resourceId: str
+
+
+@router.post("/export/resource")
+async def export_resource(request: ResourceModel):
+    return responses.Response(
+        status_code=202, content=drive_client.export(request.resourceId)
+    )

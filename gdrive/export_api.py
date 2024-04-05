@@ -173,7 +173,6 @@ async def find(find: FindModel):
 # ------------------------------- Archive API --------------------------------------
 class InteractionModel(BaseModel):
     interactionId: str
-    driveId: str
 
 
 @router.post("/export/interaction-files")

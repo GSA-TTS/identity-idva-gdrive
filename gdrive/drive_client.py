@@ -1,5 +1,6 @@
 import io
 import logging
+import json
 import mimetypes
 from typing import List
 
@@ -174,9 +175,57 @@ def get_files(filename: str) -> List:
     return results["files"]
 
 
+def get_files_by_drive_id(filename: str, drive_id: str):
+    """
+    Get list of files by filename
+    """
+
+    results = (
+        service.files()
+        .list(
+            q=f"name = '{filename}'",
+            corpora="drive",
+            driveId=drive_id,
+            includeTeamDriveItems=True,
+            supportsTeamDrives=True,
+        )
+        .execute()
+    )
+
+    return results["files"]
+
+
+def get_files_in_folder(id: str) -> List:
+    """
+    Get list of files within a folder by folder ID
+    """
+    files = []
+    page_token = None
+    while True:
+        results = (
+            service.files()
+            .list(
+                q=f"'{id}' in parents and trashed=false",
+                supportsAllDrives=True,
+                includeItemsFromAllDrives=True,
+                pageToken=page_token,
+            )
+            .execute()
+        )
+        files.extend(results.get("files", []))
+        page_token = results.get("nextPageToken")
+        if not page_token:
+            break
+    return files
+
+
 def delete_file(id: str) -> None:
     """
     Delete file by id
     """
 
     service.files().delete(fileId=id, supportsAllDrives=True).execute()
+
+
+def export(id: str) -> any:
+    return service.files().get_media(fileId=id).execute()

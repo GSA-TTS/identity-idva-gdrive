@@ -4,6 +4,7 @@ from typing import List
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 from gdrive import settings, error
 
@@ -119,7 +120,7 @@ def add_pivot_tables(
 
 
 def add_new_pages(
-    page_names: [str], sheets_id: str, row_count: int = 1000, column_count: int = 26
+    page_names: List[str], sheets_id: str, row_count: int = 1000, column_count: int = 26
 ):
     new_sheets_reqs = []
     for label in page_names:
@@ -221,17 +222,23 @@ def upload_participant(
     ]
 
     body = {"values": values}
-    result = (
-        sheets_service.spreadsheets()
-        .values()
-        .append(
-            spreadsheetId=settings.SHEETS_ID,
-            range="Sheet1!A1",
-            valueInputOption="RAW",
-            body=body,
+
+    try:
+        result = (
+            sheets_service.spreadsheets()
+            .values()
+            .append(
+                spreadsheetId=settings.SHEETS_ID,
+                range=f"{settings.RAW_COMPLETIONS_SHEET_NAME}!A1",
+                valueInputOption="RAW",
+                body=body,
+            )
+            .execute()
         )
-        .execute()
-    )
-    if "error" in result:
-        raise error.ExportError(result["error"]["message"])
-    return result
+
+        if "error" in result:
+            raise error.ExportError(result["error"]["message"])
+
+        return result
+    except HttpError as e:
+        raise error.ExportError(e)

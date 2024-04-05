@@ -165,6 +165,7 @@ def get_qualtrics_response(surveyId: str, responseId: str):
         json={"surveyId": surveyId, "responseId": responseId},
         timeout=30,  # qualtrics microservice retries as it waits for response to become available
     )
+
     if r.status_code != 200:
         raise error.ExportError(
             f"No survey response found for responseId: {responseId}"

@@ -76,8 +76,10 @@ def preprocess_report(df: pd.DataFrame) -> pd.DataFrame:
         "twitter",
         "linked.com",
         "lnkd.in",
+        "pllpl",
+        "ffg",
     ]
-    tracked_mediums = ["fb", "cl", "rd", "tx", "ln"]
+    tracked_mediums = ["fb", "cl", "rd", "tx", "ln", "pllpl", "ffg"]
 
     for event in tracked_events:
         tracked_df = df[df[0] == event]
@@ -134,6 +136,8 @@ def create_pivot_tables(df: pd.DataFrame, names_to_id: dict, sheets_id: str):
     twitter_x_pivot(sheets_id, names_to_id, col_dict)
     linkedin_pivot(sheets_id, names_to_id, col_dict)
     linked_pivot(sheets_id, names_to_id, col_dict)
+    pllpl_pivot(sheets_id, names_to_id, col_dict)
+    ffg_pivot(sheets_id, names_to_id, col_dict)
 
     sheets_client.add_pivot_tables(
         sheets_id, names_to_id[SheetsEnum.GSA.value], idva.clicks(col_dict)
@@ -422,6 +426,34 @@ def linked_pivot(sheets_id, names_to_id, col_dict):
     )
     sheets_client.update_cell_value(
         sheets_id, SheetsEnum.REKREWT.value, "H3", linkedin_visit.render()
+    )
+
+
+def pllpl_pivot(sheets_id, names_to_id, col_dict):
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "A23", "PLLPL"
+    )  # Pivot table Label
+
+    sheets_client.add_pivot_tables(
+        sheets_id,
+        names_to_id[SheetsEnum.REKREWT.value],
+        idva.pllpl(col_dict),
+        row_idx=23,
+        col_idx=0,
+    )
+
+
+def ffg_pivot(sheets_id, names_to_id, col_dict):
+    sheets_client.update_cell_value(
+        sheets_id, SheetsEnum.REKREWT.value, "A35", "FFG"
+    )  # Pivot table Label
+
+    sheets_client.add_pivot_tables(
+        sheets_id,
+        names_to_id[SheetsEnum.REKREWT.value],
+        idva.ffg(col_dict),
+        row_idx=35,
+        col_idx=0,
     )
 
 

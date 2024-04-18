@@ -320,3 +320,79 @@ class IDVAPivotDirector:
         )
 
         return builder.render()
+
+    def pllpl(self, col_dict: dict) -> dict:
+        builder = PivotTableBuilder(0, col_dict)
+        builder.add_row("eventName", SortOrderEnum.ASCENDING, show_totals=False)
+        builder.add_row("firstUserMedium", SortOrderEnum.ASCENDING)
+        builder.add_row("firstUserSource", SortOrderEnum.ASCENDING)
+        builder.add_row(
+            "firstUserCampaignName", SortOrderEnum.ASCENDING, show_totals=False
+        )
+
+        builder.add_value("eventCount", SummarizeFunctionEnum.SUM)
+
+        # =OR(regexmatch(eventName,"session_start"),regexmatch(eventName,"first_visit"))
+        sessions = FormulaBuilder(
+            FormulaEnum.OR,
+            [
+                FormulaBuilder(
+                    FormulaEnum.REGEX_MATCH,
+                    ["eventName", StringLiteral("session_start")],
+                ),
+                FormulaBuilder(
+                    FormulaEnum.REGEX_MATCH, ["eventName", StringLiteral("first_visit")]
+                ),
+            ],
+        )
+
+        builder.add_filter(
+            "firstUserMedium",
+            FilterTypeEnum.TEXT_CONTAINS,
+            values=[UserEnteredValue("pllpl")],
+        )
+        builder.add_filter(
+            "eventName",
+            FilterTypeEnum.CUSTOM,
+            values=[UserEnteredValue(sessions.render())],
+        )
+
+        return builder.render()
+
+    def ffg(self, col_dict: dict) -> dict:
+        builder = PivotTableBuilder(0, col_dict)
+        builder.add_row("eventName", SortOrderEnum.ASCENDING, show_totals=False)
+        builder.add_row("firstUserMedium", SortOrderEnum.ASCENDING)
+        builder.add_row("firstUserSource", SortOrderEnum.ASCENDING)
+        builder.add_row(
+            "firstUserCampaignName", SortOrderEnum.ASCENDING, show_totals=False
+        )
+
+        builder.add_value("eventCount", SummarizeFunctionEnum.SUM)
+
+        # =OR(regexmatch(eventName,"session_start"),regexmatch(eventName,"first_visit"))
+        sessions = FormulaBuilder(
+            FormulaEnum.OR,
+            [
+                FormulaBuilder(
+                    FormulaEnum.REGEX_MATCH,
+                    ["eventName", StringLiteral("session_start")],
+                ),
+                FormulaBuilder(
+                    FormulaEnum.REGEX_MATCH, ["eventName", StringLiteral("first_visit")]
+                ),
+            ],
+        )
+
+        builder.add_filter(
+            "firstUserMedium",
+            FilterTypeEnum.TEXT_CONTAINS,
+            values=[UserEnteredValue("ffg")],
+        )
+        builder.add_filter(
+            "eventName",
+            FilterTypeEnum.CUSTOM,
+            values=[UserEnteredValue(sessions.render())],
+        )
+
+        return builder.render()

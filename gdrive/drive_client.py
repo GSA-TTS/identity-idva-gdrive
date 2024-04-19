@@ -208,6 +208,7 @@ def get_files_in_folder(id: str) -> List:
                 q=f"'{id}' in parents and trashed=false",
                 supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
+                fields="nextPageToken, files(*)",
                 pageToken=page_token,
             )
             .execute()

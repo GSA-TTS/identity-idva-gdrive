@@ -201,6 +201,13 @@ class ResourceModel(BaseModel):
     resourceId: str
 
 
+@router.post("/export/directories")
+async def get_directories(request: ResourceModel):
+    return responses.JSONResponse(
+        status_code=202, content=drive_client.get_files_in_folder(id=request.resourceId)
+    )
+
+
 @router.post("/export/resource")
 async def export_resource(request: ResourceModel):
     return responses.Response(

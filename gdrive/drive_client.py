@@ -2,11 +2,13 @@ import io
 import logging
 import json
 import mimetypes
+import time
 from typing import List
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
+from googleapiclient.errors import HttpError
 
 from gdrive import settings, error
 
@@ -30,14 +32,17 @@ def init():
     log.info(f"Connected to Root Directory {driveId}")
 
 
-def list(count: int = 10, shared: bool = True) -> None:
+def list(count: int = 10, shared: bool = True, parent: str | None = None) -> None:
     """
     Prints the names and ids of the first <count> files the user has access to.
     """
 
+    mq = f"'{parent}' in parents" if parent else ""
+
     results = (
         service.files()
         .list(
+            q=mq,
             pageSize=count,
             fields="*",
             supportsAllDrives=shared,
@@ -61,6 +66,37 @@ def list(count: int = 10, shared: bool = True) -> None:
             )
         except KeyError as error:
             log.info(f"No such key: {error} in {item}")
+
+
+def count(shared: bool = True, parent: str | None = None) -> None:
+    """
+    Prints the names and ids of the first <count> files the user has access to.
+    """
+
+    mq = f"'{parent}' in parents" if parent else ""
+
+    results = __count(mq, "", shared)
+    count = len(results["files"])
+
+    while results.get("nextPageToken", None):
+        results = __count(mq, results["nextPageToken"], shared)
+        count += len(results["files"])
+    return count
+
+
+def __count(query, nextPageToken, shared):
+    results = (
+        service.files()
+        .list(
+            q=query,
+            pageSize=1000,
+            supportsAllDrives=shared,
+            includeItemsFromAllDrives=shared,
+            pageToken=nextPageToken,
+        )
+        .execute()
+    )
+    return results
 
 
 def create_empty_spreadsheet(filename: str, parent_id: str) -> str:
@@ -180,17 +216,31 @@ def get_files_by_drive_id(filename: str, drive_id: str):
     Get list of files by filename
     """
 
-    results = (
-        service.files()
-        .list(
-            q=f"name = '{filename}'",
-            corpora="drive",
-            driveId=drive_id,
-            includeTeamDriveItems=True,
-            supportsTeamDrives=True,
+    try:
+        results = (
+            service.files()
+            .list(
+                q=f"name = '{filename}'",
+                corpora="drive",
+                driveId=drive_id,
+                includeTeamDriveItems=True,
+                supportsTeamDrives=True,
+            )
+            .execute()
         )
-        .execute()
-    )
+    except HttpError:  # manual retry hack
+        time.sleep(2)
+        results = (
+            service.files()
+            .list(
+                q=f"name = '{filename}'",
+                corpora="drive",
+                driveId=drive_id,
+                includeTeamDriveItems=True,
+                supportsTeamDrives=True,
+            )
+            .execute()
+        )
 
     return results["files"]
 
@@ -202,17 +252,35 @@ def get_files_in_folder(id: str) -> List:
     files = []
     page_token = None
     while True:
-        results = (
-            service.files()
-            .list(
-                q=f"'{id}' in parents and trashed=false",
-                supportsAllDrives=True,
-                includeItemsFromAllDrives=True,
-                fields="nextPageToken, files(*)",
-                pageToken=page_token,
+        try:
+            results = (
+                service.files()
+                .list(
+                    q=f"'{id}' in parents and trashed=false",
+                    pageSize=1000,
+                    supportsAllDrives=True,
+                    includeItemsFromAllDrives=True,
+                    fields="nextPageToken, files(*)",
+                    pageToken=page_token,
+                    orderBy="createdTime",
+                )
+                .execute()
             )
-            .execute()
-        )
+        except HttpError:  # manual retry hack
+            time.sleep(2)
+            results = (
+                service.files()
+                .list(
+                    q=f"'{id}' in parents and trashed=false",
+                    pageSize=1000,
+                    supportsAllDrives=True,
+                    includeItemsFromAllDrives=True,
+                    fields="nextPageToken, files(*)",
+                    pageToken=page_token,
+                    orderBy="createdTime",
+                )
+                .execute()
+            )
         files.extend(results.get("files", []))
         page_token = results.get("nextPageToken")
         if not page_token:
@@ -230,3 +298,73 @@ def delete_file(id: str) -> None:
 
 def export(id: str) -> any:
     return service.files().get_media(fileId=id).execute()
+
+
+def copy(fileId: str, new_location: str):
+    new_file = {"parents": [new_location]}
+
+    result = (
+        service.files()
+        .copy(body=new_file, fileId=fileId, supportsAllDrives=True)
+        .execute()
+    )
+
+    return result
+
+
+def search(responseId: str, source_drive: str):
+    """
+    Prints the names and ids of the first <count> files the user has access to.
+    """
+
+    mq = f"fullText contains '{responseId}' and name = 'analytics.json'"
+
+    results = (
+        service.files()
+        .list(
+            q=mq,
+            driveId=source_drive,
+            corpora="drive",
+            fields="*",
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
+        )
+        .execute()
+    )
+    items = results.get("files", [])
+    return items
+
+
+def exists(filename: str, parent: str):
+    # , source_drive: str
+    """
+    does file exist?
+    """
+
+    results = (
+        service.files()
+        .list(
+            q=f"'{parent}' in parents and name = '{filename}'",
+            # driveId=source_drive,
+            # corpora='drive',
+            fields="*",
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
+        )
+        .execute()
+    )
+    #    return results["files"]
+    items = results.get("files", [])
+    return items
+
+
+def move(fileId: str, source: str, dest: str):
+    result = (
+        service.files()
+        .update(
+            addParents=dest, removeParents=source, fileId=fileId, supportsAllDrives=True
+        )
+        .execute()
+    )
+
+    return result

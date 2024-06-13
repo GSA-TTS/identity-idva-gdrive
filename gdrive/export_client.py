@@ -1,6 +1,7 @@
 import logging
 import json
 import re
+from types import SimpleNamespace
 import requests
 
 from opensearchpy import OpenSearch
@@ -151,7 +152,7 @@ def export_response(responseId, survey_response):
         )
 
     results_update = es.update_by_query(
-        index="_all", body=query_response_data, refresh=True
+        index="_all", body=query_response_data, refresh=True, scroll="18s"
     )
 
     return list(map(lambda id: id["match"]["interactionId"], interactionIds_match))
@@ -172,6 +173,91 @@ def get_qualtrics_response(surveyId: str, responseId: str):
         )
 
     return r.json()
+
+
+def get_qualtrics_contact(contactId: str):
+    url = f"http://{settings.QUALTRICS_APP_URL}:{settings.QUALTRICS_APP_PORT}/contact/{contactId}"
+
+    r = requests.post(
+        url,
+        timeout=30,  # qualtrics microservice retries as it waits for response to become available
+    )
+    if r.status_code != 200:
+        raise error.ExportError(f"No contact response found for contactId: {contactId}")
+    return r.json()
+
+
+def export_dead():
+    es = OpenSearch(
+        hosts=[{"host": settings.ES_HOST, "port": settings.ES_PORT}], timeout=300
+    )
+
+    query_interactionId = {
+        # "size": 1000,
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "match_phrase": {
+                            "properties.outcomeType.value": "survey_response"
+                        }
+                    },
+                    {"match": {"properties.outcomeDescription.value": "N/A"}},
+                ]
+            }
+        },
+        "_source": ["interactionId"],
+    }
+
+    results_interacitonId = es.search(
+        body=json.dumps(query_interactionId), index="_all"
+    )
+
+    interactionIds_match = list(
+        map(
+            lambda res: {
+                "match": {"interactionId": f'{res["_source"]["interactionId"]}'}
+            },
+            results_interacitonId["hits"]["hits"],
+        )
+    )
+
+    query_interactionId = {
+        # "size": 1000,
+        "query": {
+            "bool": {
+                "must": [
+                    {"match_phrase": {"properties.outcomeType.value": "survey_data"}}
+                ],
+                "should": interactionIds_match,
+            }
+        }
+    }
+
+    responseIds_result = es.search(body=json.dumps(query_interactionId), index="_all")
+
+    for item in responseIds_result["hits"]["hits"]:
+        survey_data = json.loads(
+            item["_source"]["properties"]["outcomeDescription"]["value"]
+        )
+        responseId = survey_data["responseId"]
+
+        # query qaultrix for suvery result
+        # if present and or > 24 hours
+        # run exoport on the data
+
+    print("hello")
+
+    # if len(interactionIds_match) == 0:
+    #     raise error.ExportError(
+    #         f"No flow interactionId match for responseId: {responseId}"
+    #     )
+
+    # results_update = es.update_by_query(
+    #     index="_all", body=query_response_data, refresh=True
+    # )
+
+    # return list(map(lambda id: id["match"]["interactionId"], interactionIds_match))
 
 
 def get_all_InteractionIds(responseId):

@@ -53,13 +53,18 @@ async def upload_file(
         parent = drive_client.create_folder(id, settings.ROOT_DIRECTORY)
 
         if zip:
-            with zipfile.ZipFile(stream) as archive:
-                files = archive.filelist
-                for file in files:
-                    image = io.BytesIO(archive.read(file))
-                    drive_client.upload_basic(
-                        f"{filename}_{file.filename}", parent, image
-                    )
+            try:
+                with zipfile.ZipFile(stream) as archive:
+                    files = archive.filelist
+                    for file in files:
+                        image = io.BytesIO(archive.read(file))
+                        client.upload_basic(
+                            f"{filename}_{file.filename}", parent, image
+                        )
+            except zipfile.BadZipFile as error:
+                client.upload_basic(filename, parent, stream)
+                log.error(f"An error occurred: {error}")
+                response.status_code = status.HTTP_400_BAD_REQUEST
         else:
             drive_client.upload_basic(filename, parent, stream)
 
@@ -85,3 +90,27 @@ async def delete_file(filename, response: Response):
     except HttpError as error:
         log.error(f"An error occurred: {error}")
         response.status_code = error.status_code
+
+
+@router.get("/list")
+async def list():
+    """ """
+    s = client.list(count=200, parent="0AFrX3czp_UwZUk9PVA")
+    print(s)
+
+
+@router.get("/count")
+async def list():
+    """ """
+    s = drive_client.count(parent="1dz8UklyVsBDLP0wC5HPVSOuKpYGqrNEI")
+    print(s)
+
+
+@router.post("/move")
+async def move_file(file: str, source: str, dest: str):
+    return drive_client.move(file, source, dest)
+
+
+@router.post("/create_folder")
+async def move_file(name: str, dest: str):
+    return drive_client.create_folder(name, dest)

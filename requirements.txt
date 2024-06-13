@@ -14,3 +14,6 @@ pandas==2.2.2
 sqlalchemy==1.4.*
 psycopg2==2.9.9
 alembic==1.13.1
+wheel
+gspread
+jinja2

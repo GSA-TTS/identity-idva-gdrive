@@ -21,9 +21,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/spreadsheets",
 ]
-
-SERVICE_ACCOUNT_FILE = "credentials.json"
-
+SERVICE_ACCOUNT_FILE = "../identity-idva-utils/secrets/gdrive/credentials-prod.json"
 ROOT_DIRECTORY = ""
 CODE_NAMES = None
 CREDENTIALS = None
@@ -31,11 +29,11 @@ ANALYTICS_ROOT = None
 ANALYTICS_PROPERTY_ID = None
 ANALYTICS_CREDENTIALS = None
 
-ES_HOST = os.getenv("ES_HOST")
-ES_PORT = os.getenv("ES_PORT")
+ES_HOST = os.getenv("ES_HOST", "localhost")
+ES_PORT = os.getenv("ES_PORT", "8090")
 
-QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL")
-QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT")
+QUALTRICS_APP_URL = os.getenv("QUALTRICS_APP_URL", "localhost")
+QUALTRICS_APP_PORT = os.getenv("QUALTRICS_APP_PORT", "8060")
 
 RAW_COMPLETIONS_SHEET_NAME = os.getenv("GDRIVE_RAW_COMPLETIONS_SHEET_NAME", "Sheet1")
 
@@ -48,15 +46,15 @@ try:
     config = {}
     if vcap_services:
         user_services = json.loads(vcap_services)["user-provided"]
-        DB_URI = json.loads(vcap_services)["aws-rds"][0]["credentials"]["uri"]
-        #  Sqlalchemy requires 'postgresql' as the protocol
-        DB_URI = DB_URI.replace("postgres://", "postgresql://", 1)
         for service in user_services:
             if service["name"] == "gdrive":
                 log.info("Loading credentials from env var")
                 config = service["credentials"]
 
                 break
+        db = json.loads(vcap_services)["aws-rds"][0]["credentials"]["uri"]
+        #  Sqlalchemy requires 'postgresql' as the protocol
+        DB_URI = db.replace("postgres://", "postgresql://", 1)
     else:
         with open(SERVICE_ACCOUNT_FILE) as file:
             log.info("Loading credentials from creds file")
@@ -72,4 +70,4 @@ try:
 
 except (json.JSONDecodeError, KeyError, FileNotFoundError) as err:
     log.warning("Unable to load credentials from VCAP_SERVICES")
-    log.debug("Error: %s", str(err))
+    log.error("Error: %s", str(err))

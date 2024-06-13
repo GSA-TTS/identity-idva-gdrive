@@ -2,14 +2,17 @@
 gdrive rest api
 """
 
+from datetime import datetime
 import io
 import json
 import logging
 import sys
+import time
 
 import fastapi
 from pydantic import BaseModel, Field
 from fastapi import BackgroundTasks, responses
+import requests
 
 from gdrive import export_client, drive_client, sheets_client, settings, error
 from gdrive.database import database, crud, models
@@ -19,16 +22,28 @@ log = logging.getLogger(__name__)
 router = fastapi.APIRouter()
 
 
+@router.get("/dead")
+async def dead(interationId):
+    export_client.export_dead()
+
+
 @router.post("/export")
 async def upload_file(interactionId):
-    log.info(f"Export interaction {interactionId}")
-    export_data = export_client.export(interactionId)
-    export_bytes = io.BytesIO(
-        export_client.codename(json.dumps(export_data, indent=2)).encode()
-    )
     parent = drive_client.create_folder(interactionId, settings.ROOT_DIRECTORY)
-    drive_client.upload_basic("analytics.json", parent, export_bytes)
-    log.info(f"Uploading {sys.getsizeof(export_bytes)} bytes to drive folder {parent}")
+    files = drive_client.exists("analytics.json", parent)
+    if files != []:
+        log.warn(f"analytics.json for {interactionId} already exists in {parent}")
+    else:
+        log.info(f"Export interaction {interactionId}")
+        export_data = export_client.export(interactionId)
+        export_bytes = io.BytesIO(
+            export_client.codename(json.dumps(export_data, indent=2)).encode()
+        )
+
+        drive_client.upload_basic("analytics.json", parent, export_bytes)
+        log.info(
+            f"Uploading {sys.getsizeof(export_bytes)} bytes to drive folder {parent}"
+        )
 
 
 class ParticipantModel(BaseModel):
@@ -66,7 +81,53 @@ async def survey_upload_response(
     )
 
 
-async def survey_upload_response_task(request):
+@router.post("/manual-survey-export")
+async def manual_survey_upload_response(
+    responseId: str, surveyId: str, background_tasks: BackgroundTasks
+):
+    request = SurveyParticipantModel(surveyId=surveyId, responseId=responseId)
+    await survey_upload_response_task(request, fetchParticipantInfo=True)
+
+
+@router.post("/bulk-citr-export")
+async def bulk_citer_export():
+    i = 0
+    j = len(ids)
+    for id in ids:
+        i += 1
+        log.info(f" {i} / {j}   {id}")
+
+        # survey export
+        # request = SurveyParticipantModel(surveyId="SV_9H7s2QQiAWFpQIS", responseId=id)
+        # await survey_upload_response_task(request)
+
+        # citer export
+        await citer_export(id)
+
+
+@router.post("/citr-export/{responseId}")
+async def citer_export(responseId):
+    citer_folder = "1Zk7xFackMpN1-4Nl8x1M9GuI4peC5Ymv"
+    source_drive = "0AFrX3czp_UwZUk9PVA"
+
+    files = drive_client.search(responseId, source_drive)
+
+    # folder_name = datetime.strftime( datetime.now(),'%m/%d')
+    folder_name = "incompletes"
+
+    parent = "1dz8UklyVsBDLP0wC5HPVSOuKpYGqrNEI"  # drive_client.create_folder(folder_name, citer_folder)
+
+    if len(files) == 0:
+        log.warning(f"no analytics for {responseId}")
+    else:
+        responseId_folder = drive_client.create_folder(responseId, parent)
+
+        for file in files:
+            new_file = drive_client.copy(file["id"], responseId_folder)
+        # TimeoutError
+
+
+async def survey_upload_response_task(request, fetchParticipantInfo=False):
     """
     Background task that handles qualtrics response fetching and exporting
     """
@@ -88,30 +149,42 @@ async def survey_upload_response_task(request):
         # throws exception in get_qualtrics_response
         survey_resp = response["response"]
 
-        if request.participant:
-            participant = request.participant
-            upload_result = sheets_client.upload_participant(
-                participant.first,
-                participant.last,
-                participant.email,
-                request.responseId,
-                participant.time,
-                participant.date,
-                survey_resp["ethnicity"],
-                ", ".join(
-                    survey_resp["race"]
-                ),  # Can have more than one value in a list
-                survey_resp["gender"],
-                survey_resp["age"],
-                survey_resp["income"],
-                survey_resp["skin_tone"],
-            )
-
-            result_sheet_id = upload_result["spreadsheetId"]
-            if upload_result:
-                log.info(
-                    f"Uploaded response: {request.responseId} to completions spreadsheet {result_sheet_id}"
+        if request.participant or fetchParticipantInfo:
+            if fetchParticipantInfo:
+                pdict = export_client.get_qualtrics_contact(survey_resp["contactId"])[
+                    "result"
+                ]
+                participant = ParticipantModel(
+                    first=pdict["firstName"],
+                    last=pdict["lastName"],
+                    email=pdict["email"],
+                    time=pdict["embeddedData"]["time"],
+                    date=pdict["embeddedData"]["Date"],
                 )
+            else:
+                participant = request.participant
+                upload_result = sheets_client.upload_participant(
+                    participant.first,
+                    participant.last,
+                    participant.email,
+                    request.responseId,
+                    participant.time,
+                    participant.date,
+                    survey_resp["ethnicity"],
+                    ", ".join(
+                        survey_resp["race"]
+                    ),  # Can have more than one value in a list
+                    survey_resp["gender"],
+                    survey_resp["age"],
+                    survey_resp["income"],
+                    survey_resp["skin_tone"],
+                )
+
+                result_sheet_id = upload_result["spreadsheetId"]
+                if upload_result:
+                    log.info(
+                        f"Uploaded response: {request.responseId} to completions spreadsheet {result_sheet_id}"
+                    )
 
             crud.create_participant(
                 models.ParticipantModel(

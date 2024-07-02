@@ -5,7 +5,7 @@ google-analytics-admin==0.22.7
 google-analytics-data==0.18.8
 google-api-core==2.19.0
 google-api-python-client==2.130.0
-google-auth==2.29.0
+google-auth==2.31.0
 google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.0
 googleapis-common-protos==1.63.0

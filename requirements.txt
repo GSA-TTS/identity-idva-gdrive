@@ -7,7 +7,7 @@ google-api-core==2.19.0
 google-api-python-client==2.130.0
 google-auth==2.29.0
 google-auth-httplib2==0.2.0
-google-auth-oauthlib==1.2.0
+google-auth-oauthlib==1.2.1
 googleapis-common-protos==1.63.0
 opensearch-py==2.5.0
 pandas==2.2.2

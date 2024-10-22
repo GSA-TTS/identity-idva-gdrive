@@ -12,5 +12,5 @@ googleapis-common-protos==1.63.0
 opensearch-py==2.5.0
 pandas==2.2.2
 sqlalchemy==1.4.*
-psycopg2==2.9.9
+psycopg2==2.9.10
 alembic==1.13.1
